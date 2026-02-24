@@ -4,6 +4,7 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="bg_main">#F3F3F3</color>
-    <color name="primary_blue">#004AAD</color>
+    <color name="primary_blue">#0D47A1</color> <!-- Azul más oscuro -->
+    <color name="primary_dark_blue">#002171</color>
     <color name="btn_border">#333333</color>
 </resources>

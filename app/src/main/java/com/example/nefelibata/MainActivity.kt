@@ -1,16 +1,20 @@
 package com.example.nefelibata
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.nefelibata.models.Historia
 import com.example.nefelibata.adapters.HistoriaAdapter
+import com.example.nefelibata.models.Historia
+import com.example.nefelibata.ui.auth.LoginActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -28,6 +32,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var llNumerosPaginas: LinearLayout
     private lateinit var btnAnterior: MaterialButton
     private lateinit var btnSiguiente: MaterialButton
+    private lateinit var llUserLoggedIn: LinearLayout
+    private lateinit var tvUsername: TextView
+    private lateinit var tvLogout: TextView
 
     private var paginaActual = 1
     private var totalPaginas = 1
@@ -52,15 +59,18 @@ class MainActivity : AppCompatActivity() {
         btnAnterior = findViewById(R.id.btn_anterior)
         btnSiguiente = findViewById(R.id.btn_siguiente)
         val chipGroup = findViewById<ChipGroup>(R.id.cg_generos)
+        
+        llUserLoggedIn = findViewById(R.id.ll_user_logged_in)
+        tvUsername = findViewById(R.id.tv_username)
+        tvLogout = findViewById(R.id.tv_logout)
 
         rvHistorias.layoutManager = LinearLayoutManager(this)
         adapter = HistoriaAdapter(emptyList())
         rvHistorias.adapter = adapter
 
-        // Configurar géneros
         val listaGeneros = listOf(
-            "Acción", "Aventura", "Comedia", "Drama", "Deportes", 
-            "Fantasía", "Magia", "Musical", "Psicológico", 
+            "Acción", "Aventura", "Comedia", "Drama", "Deportes",
+            "Fantasía", "Magia", "Musical", "Psicológico",
             "Romance", "Superhéroes", "Terror", "Tragedia"
         )
         for (genero in listaGeneros) {
@@ -70,6 +80,7 @@ class MainActivity : AppCompatActivity() {
             chipGroup.addView(chip)
         }
 
+        checkUserSession()
         calcularTotalPaginasYCargar()
 
         btnAnterior.setOnClickListener {
@@ -84,6 +95,32 @@ class MainActivity : AppCompatActivity() {
                 paginaActual++
                 cargarHistoriasDeFirebase()
             }
+        }
+
+        tvLogout.setOnClickListener {
+            auth.signOut()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        }
+    }
+
+    private fun checkUserSession() {
+        val user = auth.currentUser
+        if (user != null) {
+            llUserLoggedIn.visibility = View.VISIBLE
+
+            db.collection("usuarios").document(user.uid).get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        tvUsername.text = document.getString("nombre")
+                    } else {
+                        tvUsername.text = user.displayName ?: "Usuario"
+                    }
+                }
+        } else {
+            llUserLoggedIn.visibility = View.GONE
         }
     }
 
@@ -115,29 +152,25 @@ class MainActivity : AppCompatActivity() {
 
         llNumerosPaginas.removeAllViews()
 
-        // Creamos botones para cada número de página
         for (i in 1..totalPaginas) {
             val btnNum = MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle)
             btnNum.text = i.toString()
             btnNum.minWidth = 0
             btnNum.minimumWidth = 0
             btnNum.setPadding(20, 0, 20, 0)
-            
-            // Ajuste de margen para que parezcan pegados
+
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.setMargins(-2, 0, -2, 0) // Margen negativo para solapar bordes
+            params.setMargins(-2, 0, -2, 0)
             btnNum.layoutParams = params
 
             if (i == paginaActual) {
-                // Estilo para la página seleccionada (azul con texto blanco)
                 btnNum.setBackgroundColor(Color.parseColor("#2196F3"))
                 btnNum.setTextColor(Color.WHITE)
                 btnNum.strokeWidth = 0
             } else {
-                // Estilo para las otras páginas (borde gris/azul y texto azul)
                 btnNum.setTextColor(Color.parseColor("#2196F3"))
                 btnNum.setStrokeColorResource(android.R.color.darker_gray)
                 btnNum.setOnClickListener {
