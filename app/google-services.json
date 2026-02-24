@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1048728494011",
+    "project_id": "nefelibata-2e306",
+    "storage_bucket": "nefelibata-2e306.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1048728494011:android:9d7a4ea9d1a8578133ee9e",
+        "android_client_info": {
+          "package_name": "com.example.nefelibata"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1048728494011-la208k90k2iqha6aplvoe5tebp601985.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDA0bgJBK_LY5raHV2hyqg72wgFaHmv4N4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1048728494011-la208k90k2iqha6aplvoe5tebp601985.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
