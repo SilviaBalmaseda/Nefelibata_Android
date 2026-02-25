@@ -3,7 +3,9 @@ package com.example.nefelibata
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +14,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.nefelibata.R
 import com.example.nefelibata.adapters.HistoriaAdapter
 import com.example.nefelibata.models.Historia
 import com.example.nefelibata.ui.auth.LoginActivity
@@ -35,6 +38,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var llUserLoggedIn: LinearLayout
     private lateinit var tvUsername: TextView
     private lateinit var tvLogout: TextView
+    
+    private lateinit var llGenerosHeader: LinearLayout
+    private lateinit var ivToggleGeneros: ImageView
+    private lateinit var cgGeneros: ChipGroup
 
     private var paginaActual = 1
     private var totalPaginas = 1
@@ -58,11 +65,13 @@ class MainActivity : AppCompatActivity() {
         llNumerosPaginas = findViewById(R.id.ll_numeros_paginas)
         btnAnterior = findViewById(R.id.btn_anterior)
         btnSiguiente = findViewById(R.id.btn_siguiente)
-        val chipGroup = findViewById<ChipGroup>(R.id.cg_generos)
-        
         llUserLoggedIn = findViewById(R.id.ll_user_logged_in)
         tvUsername = findViewById(R.id.tv_username)
         tvLogout = findViewById(R.id.tv_logout)
+        
+        llGenerosHeader = findViewById(R.id.ll_generos_header)
+        ivToggleGeneros = findViewById(R.id.iv_toggle_generos)
+        cgGeneros = findViewById(R.id.cg_generos)
 
         rvHistorias.layoutManager = LinearLayoutManager(this)
         adapter = HistoriaAdapter(emptyList())
@@ -77,7 +86,18 @@ class MainActivity : AppCompatActivity() {
             val chip = Chip(this)
             chip.text = genero
             chip.isCheckable = true
-            chipGroup.addView(chip)
+            chip.textAlignment = View.TEXT_ALIGNMENT_CENTER
+            cgGeneros.addView(chip)
+        }
+        
+        llGenerosHeader.setOnClickListener {
+            if (cgGeneros.visibility == View.VISIBLE) {
+                cgGeneros.visibility = View.GONE
+                ivToggleGeneros.setImageResource(android.R.drawable.arrow_down_float)
+            } else {
+                cgGeneros.visibility = View.VISIBLE
+                ivToggleGeneros.setImageResource(android.R.drawable.arrow_up_float)
+            }
         }
 
         checkUserSession()
@@ -157,21 +177,21 @@ class MainActivity : AppCompatActivity() {
             btnNum.text = i.toString()
             btnNum.minWidth = 0
             btnNum.minimumWidth = 0
-            btnNum.setPadding(20, 0, 20, 0)
+            btnNum.setPadding(35, 0, 35, 0)
 
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.setMargins(-2, 0, -2, 0)
+            params.setMargins(4, 0, 4, 0)
             btnNum.layoutParams = params
 
             if (i == paginaActual) {
-                btnNum.setBackgroundColor(Color.parseColor("#2196F3"))
+                btnNum.setBackgroundColor(Color.parseColor("#0D47A1"))
                 btnNum.setTextColor(Color.WHITE)
                 btnNum.strokeWidth = 0
             } else {
-                btnNum.setTextColor(Color.parseColor("#2196F3"))
+                btnNum.setTextColor(Color.parseColor("#0D47A1"))
                 btnNum.setStrokeColorResource(android.R.color.darker_gray)
                 btnNum.setOnClickListener {
                     paginaActual = i

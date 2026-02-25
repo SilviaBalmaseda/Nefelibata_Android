@@ -56,15 +56,14 @@ dependencies {
 
     // Configuración Firebase (Usando BOM)
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    implementation("com.google.firebase:firebase-analytics")
 
-    implementation("com.google.firebase:firebase-analytics-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx") // Versión KTX para Kotlin
+    // Coil para cargar imágenes (en lugar de Glide)
+    implementation("io.coil-kt:coil:2.6.0")
 
-    // LÍNEA CLAVE PARA CORRUTINAS
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1") // O la versión más reciente
-
-    //implementation("com.google.firebase:firebase-analytics")
-    //implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // Corrutinas
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

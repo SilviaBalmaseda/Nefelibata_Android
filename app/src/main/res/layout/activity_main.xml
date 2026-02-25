@@ -38,7 +38,6 @@
             app:layout_constraintStart_toEndOf="@+id/iv_logo"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Solo mostramos esto si el usuario está logueado -->
         <LinearLayout
             android:id="@+id/ll_user_logged_in"
             android:layout_width="wrap_content"
@@ -68,38 +67,59 @@
                 android:text="Cerrar sesión"
                 android:textColor="@color/black" />
         </LinearLayout>
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <TextView
-        android:id="@+id/tv_generos_title"
+    <LinearLayout
+        android:id="@+id/ll_generos_header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="GÉNEROS"
-        android:textColor="@color/black"
-        android:textSize="24sp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"
+        android:padding="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/header_layout" />
+        app:layout_constraintTop_toBottomOf="@id/header_layout">
+
+        <TextView
+            android:id="@+id/tv_generos_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GÉNEROS"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/iv_toggle_generos"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:src="@android:drawable/arrow_down_float"
+            app:tint="@color/black" />
+    </LinearLayout>
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/cg_generos"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
         app:chipSpacingHorizontal="8dp"
-        app:chipSpacingVertical="4dp"
+        app:chipSpacingVertical="8dp"
+        app:singleLine="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_generos_title" />
+        app:layout_constraintTop_toBottomOf="@id/ll_generos_header" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_historias"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toTopOf="@id/ll_paginacion"
         app:layout_constraintEnd_toEndOf="parent"
