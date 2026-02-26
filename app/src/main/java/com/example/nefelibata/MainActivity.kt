@@ -1,15 +1,17 @@
 package com.example.nefelibata
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.nefelibata.R
 import com.example.nefelibata.adapters.HistoriaAdapter
 import com.example.nefelibata.models.Historia
+import com.example.nefelibata.ui.SettingsActivity
 import com.example.nefelibata.ui.auth.LoginActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
@@ -37,8 +40,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSiguiente: MaterialButton
     private lateinit var llUserLoggedIn: LinearLayout
     private lateinit var tvUsername: TextView
-    private lateinit var tvLogout: TextView
-    
+    private lateinit var ivSettings: ImageView
+
     private lateinit var llGenerosHeader: LinearLayout
     private lateinit var ivToggleGeneros: ImageView
     private lateinit var cgGeneros: ChipGroup
@@ -48,8 +51,12 @@ class MainActivity : AppCompatActivity() {
     private val HISTORIAS_POR_PAGINA = 5L
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // APLICAR TEMA ANTES DE SUPER.ONCREATE
+        val sharedPrefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+        val modeSaved = sharedPrefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+        AppCompatDelegate.setDefaultNightMode(modeSaved)
+
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -61,13 +68,17 @@ class MainActivity : AppCompatActivity() {
         auth = Firebase.auth
         db = FirebaseFirestore.getInstance()
 
+        // Sincronizar tema con Firestore al iniciar
+        sincronizarTemaDesdeNube()
+
         rvHistorias = findViewById(R.id.rv_historias)
         llNumerosPaginas = findViewById(R.id.ll_numeros_paginas)
         btnAnterior = findViewById(R.id.btn_anterior)
         btnSiguiente = findViewById(R.id.btn_siguiente)
+        
         llUserLoggedIn = findViewById(R.id.ll_user_logged_in)
         tvUsername = findViewById(R.id.tv_username)
-        tvLogout = findViewById(R.id.tv_logout)
+        ivSettings = findViewById(R.id.iv_settings)
         
         llGenerosHeader = findViewById(R.id.ll_generos_header)
         ivToggleGeneros = findViewById(R.id.iv_toggle_generos)
@@ -86,7 +97,6 @@ class MainActivity : AppCompatActivity() {
             val chip = Chip(this)
             chip.text = genero
             chip.isCheckable = true
-            chip.textAlignment = View.TEXT_ALIGNMENT_CENTER
             cgGeneros.addView(chip)
         }
         
@@ -117,13 +127,60 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        tvLogout.setOnClickListener {
-            auth.signOut()
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
+        ivSettings.setOnClickListener { view ->
+            showUserMenu(view)
         }
+    }
+
+    private fun sincronizarTemaDesdeNube() {
+        val user = auth.currentUser
+        if (user != null) {
+            db.collection("usuarios").document(user.uid).get()
+                .addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        val preferencias = document.get("preferencias") as? Map<*, *>
+                        val temaRemoto = preferencias?.get("tema") as? String
+                        
+                        temaRemoto?.let {
+                            val modeRemoto = when (it) {
+                                "claro" -> AppCompatDelegate.MODE_NIGHT_NO
+                                "oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
+                                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                            }
+                            
+                            val sharedPrefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                            if (sharedPrefs.getInt("theme_mode", -1) != modeRemoto) {
+                                sharedPrefs.edit().putInt("theme_mode", modeRemoto).apply()
+                                AppCompatDelegate.setDefaultNightMode(modeRemoto)
+                            }
+                        }
+                    }
+                }
+        }
+    }
+
+    private fun showUserMenu(view: View) {
+        val popup = PopupMenu(this, view)
+        popup.menuInflater.inflate(R.menu.user_menu, popup.menu)
+
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.menu_ajustes -> {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    true
+                }
+                R.id.menu_buscar -> {
+                    Toast.makeText(this, "Función de búsqueda próximamente", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                R.id.menu_mis_historias -> {
+                    Toast.makeText(this, "Navegando a Mis Historias", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
     }
 
     private fun checkUserSession() {

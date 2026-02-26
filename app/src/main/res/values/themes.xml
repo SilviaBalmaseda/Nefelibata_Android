@@ -1,24 +1,28 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.Nefelibata" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
+        <!-- Colores Principales -->
         <item name="colorPrimary">@color/primary_blue</item>
         <item name="colorOnPrimary">@color/white</item>
-
-        <!-- Color para el botón principal -->
         <item name="colorPrimaryContainer">@color/primary_blue</item>
         <item name="colorOnPrimaryContainer">@color/white</item>
+        
+        <!-- Fondos y Superficies -->
+        <item name="android:windowBackground">@color/background_main</item>
+        <item name="colorSurface">@color/background_card</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/divider_color</item>
 
-        <!-- Color para el botón seleccionado del ToggleGroup -->
+        <!-- Colores de selección -->
         <item name="colorSecondaryContainer">@color/primary_blue</item>
         <item name="colorOnSecondaryContainer">@color/white</item>
     </style>
 
     <style name="Theme.Nefelibata" parent="Base.Theme.Nefelibata" />
 
-    <!-- Estilo para forzar el color de los botones -->
     <style name="App.Button.Primary" parent="Widget.MaterialComponents.Button">
         <item name="backgroundTint">@color/primary_blue</item>
+        <item name="android:textColor">@color/white</item>
     </style>
-
 </resources>

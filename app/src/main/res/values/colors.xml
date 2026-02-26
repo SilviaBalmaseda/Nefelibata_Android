@@ -3,8 +3,15 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="bg_main">#F3F3F3</color>
-    <color name="primary_blue">#0D47A1</color> <!-- Azul más oscuro -->
+    <!-- Colores base -->
+    <color name="primary_blue">#0D47A1</color>
     <color name="primary_dark_blue">#002171</color>
+    
+    <!-- Colores semánticos (Modo Claro) -->
+    <color name="background_main">#F3F3F3</color>
+    <color name="background_card">#FFFFFF</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="divider_color">#E0E0E0</color>
     <color name="btn_border">#333333</color>
 </resources>
