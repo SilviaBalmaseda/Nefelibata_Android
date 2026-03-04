@@ -10,7 +10,7 @@ data class Historia(
     var numFavoritos: Int = 0,
     var sinopsis: String = "",
     var estado: Map<String, String> = emptyMap(),
-    var genero: Map<String, List<String>> = emptyMap() // Lo ponemos como Mapa para coincidir con Firestore
+    var genero: Map<String, List<String>> = emptyMap()
 ) {
     fun obtenerEstadoValidado(): String {
         val valorEs = estado["es"]?.lowercase()?.replaceFirstChar { 
@@ -27,9 +27,11 @@ data class Historia(
         return if (listaEs.isNullOrEmpty()) {
             "Ninguno"
         } else {
-            listaEs.map { it.lowercase().replaceFirstChar { char -> 
-                if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString() 
-            }}.joinToString(", ")
+            listaEs.joinToString(", ") {
+                it.lowercase().replaceFirstChar { char ->
+                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+                }
+            }
         }
     }
 }

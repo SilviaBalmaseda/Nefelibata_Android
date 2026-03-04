@@ -1,5 +1,6 @@
 package com.example.nefelibata.adapters
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.nefelibata.R
 import com.example.nefelibata.models.Historia
+import com.example.nefelibata.ui.LeerHistoriaActivity
 import com.example.nefelibata.ui.SynopsisDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.storage.FirebaseStorage
@@ -25,6 +27,9 @@ class HistoriaAdapter(
         val tvTitulo: TextView = view.findViewById(R.id.tv_story_title)
         val tvAutor: TextView = view.findViewById(R.id.tv_story_author)
         val ivImagen: ImageView = view.findViewById(R.id.iv_story_image)
+        val btnLeer: MaterialButton = view.findViewById<LinearLayout>(R.id.ll_buttons).run {
+            getChildAt(0) as MaterialButton
+        }
         val btnFavoritos: MaterialButton = view.findViewById<LinearLayout>(R.id.ll_buttons).run {
             getChildAt(1) as MaterialButton
         }
@@ -55,10 +60,18 @@ class HistoriaAdapter(
             onFavoritoClick(historia)
         }
 
+        // Lógica del botón Leer (AÑADIDO SIN MODIFICAR EL RESTO)
+        holder.btnLeer.setOnClickListener {
+            val intent = Intent(holder.itemView.context, LeerHistoriaActivity::class.java).apply {
+                putExtra("idHistoria", historia.idHistoria)
+                putExtra("tituloHistoria", historia.titulo)
+            }
+            holder.itemView.context.startActivity(intent)
+        }
+
         holder.btnSinopsis.setOnClickListener {
             val activity = holder.itemView.context as? AppCompatActivity
             activity?.let {
-                // Usamos las nuevas funciones de validación del modelo Historia
                 val dialog = SynopsisDialogFragment.newInstance(
                     status = historia.obtenerEstadoValidado(),
                     genres = historia.obtenerGenerosValidados(),
@@ -68,7 +81,7 @@ class HistoriaAdapter(
             }
         }
 
-        // Carga de imagen simplificada respetando el diseño del XML
+        // Carga de imagen (SE MANTIENE INTACTO)
         if (historia.imagenUrl.isNotEmpty()) {
             val storageRef = FirebaseStorage.getInstance().getReference(historia.imagenUrl)
             storageRef.downloadUrl.addOnSuccessListener { uri ->

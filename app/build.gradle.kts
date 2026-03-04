@@ -56,9 +56,11 @@ dependencies {
 
     // Configuración Firebase (Usando BOM)
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
-    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
-    // Coil para cargar imágenes (en lugar de Glide)
+    // Coil para cargar imágenes
     implementation("io.coil-kt:coil:2.6.0")
 
     // Corrutinas

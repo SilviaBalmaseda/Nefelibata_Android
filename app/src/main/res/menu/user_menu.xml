@@ -5,11 +5,11 @@
         android:icon="@android:drawable/ic_menu_search"
         android:title="Buscar" />
     <item
-        android:id="@+id/menu_ajustes"
-        android:icon="@android:drawable/ic_menu_preferences"
-        android:title="Ajustes" />
-    <item
         android:id="@+id/menu_mis_historias"
         android:icon="@android:drawable/ic_menu_edit"
         android:title="Mis historias" />
+    <item
+        android:id="@+id/menu_ajustes"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="Ajustes" />
 </menu>
