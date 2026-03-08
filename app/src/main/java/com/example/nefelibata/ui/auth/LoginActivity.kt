@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.lifecycleScope
 import com.example.nefelibata.MainActivity
 import com.example.nefelibata.R
@@ -91,6 +92,7 @@ class LoginActivity : AppCompatActivity() {
                             irAMainActivity()
                         } else {
                             val errorMsg = task.exception?.localizedMessage ?: "Error al iniciar sesión"
+                            Log.e("LoginActivity", "Login Error: ", task.exception)
                             Toast.makeText(this, "Error: $errorMsg", Toast.LENGTH_LONG).show()
                         }
                     }
@@ -103,7 +105,7 @@ class LoginActivity : AppCompatActivity() {
                         } else {
                             btnAction.isEnabled = true
                             val errorMsg = task.exception?.localizedMessage ?: "Error al crear la cuenta"
-                            Toast.makeText(this, "Error: $errorMsg", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
                         }
                     }
             }
@@ -120,7 +122,7 @@ class LoginActivity : AppCompatActivity() {
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
             .setServerClientId(serverClientId)
-            .setAutoSelectEnabled(false)
+            .setAutoSelectEnabled(false) 
             .build()
 
         val request = GetCredentialRequest.Builder()
@@ -129,22 +131,16 @@ class LoginActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                Log.d("LoginActivity", "Iniciando selector...")
                 val result = credentialManager.getCredential(this@LoginActivity, request)
                 val credential = result.credential
                 
-                Log.d("LoginActivity", "Credencial recibida: ${credential.type}")
-
-                // Cambio clave: Comprobamos el tipo de cadena y usamos 'createFrom'
                 if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                     val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                     val firebaseCredential = GoogleAuthProvider.getCredential(googleIdTokenCredential.idToken, null)
                     
-                    Log.d("LoginActivity", "Entrando en Firebase...")
                     auth.signInWithCredential(firebaseCredential)
                         .addOnCompleteListener(this@LoginActivity) { task ->
                             if (task.isSuccessful) {
-                                Log.d("LoginActivity", "Firebase OK")
                                 val user = auth.currentUser!!
                                 db.collection("usuarios").document(user.uid).get()
                                     .addOnSuccessListener { document ->
@@ -154,23 +150,19 @@ class LoginActivity : AppCompatActivity() {
                                             irAMainActivity()
                                         }
                                     }
-                                    .addOnFailureListener {
-                                        irAMainActivity()
-                                    }
+                                    .addOnFailureListener { irAMainActivity() }
                             } else {
-                                val error = task.exception?.localizedMessage ?: "Error desconocido"
-                                Toast.makeText(this@LoginActivity, "Firebase Error: $error", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this@LoginActivity, "Error en Firebase: ${task.exception?.localizedMessage}", Toast.LENGTH_LONG).show()
                             }
                         }
-                } else {
-                    Log.w("LoginActivity", "Tipo de credencial no esperado: ${credential.type}")
-                    Toast.makeText(this@LoginActivity, "Tipo de credencial no reconocido", Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: NoCredentialException) {
+                Toast.makeText(this@LoginActivity, "No hay cuentas de Google disponibles en este dispositivo", Toast.LENGTH_LONG).show()
             } catch (e: GetCredentialException) {
-                Log.e("LoginActivity", "Error Credential Manager: ${e.message}")
-                Toast.makeText(this@LoginActivity, "Error Google: ${e.message}", Toast.LENGTH_LONG).show()
+                Log.e("LoginActivity", "Error Google: ${e.message}")
+                Toast.makeText(this@LoginActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
-                Log.e("LoginActivity", "Error Inesperado: ${e.message}", e)
+                Log.e("LoginActivity", "Error inesperado: ${e.message}")
             }
         }
     }

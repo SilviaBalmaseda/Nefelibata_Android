@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1048728494011-6frd31e7ve5k848389oh4ghvmntsl7r1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nefelibata",
+            "certificate_hash": "b2814dd4003408b21c0016bed4c3b26ab9afe66c"
+          }
+        },
+        {
           "client_id": "1048728494011-la208k90k2iqha6aplvoe5tebp601985.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -4,13 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
@@ -20,11 +18,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.nefelibata.R
 import com.example.nefelibata.adapters.HistoriaAdapter
 import com.example.nefelibata.models.Historia
+import com.example.nefelibata.ui.SearchActivity
 import com.example.nefelibata.ui.SettingsActivity
 import com.example.nefelibata.ui.auth.LoginActivity
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
@@ -44,10 +41,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var llUserLoggedIn: LinearLayout
     private lateinit var tvUsername: TextView
     private lateinit var ivSettings: ImageView
-
-    private lateinit var llGenerosHeader: LinearLayout
-    private lateinit var ivToggleGeneros: ImageView
-    private lateinit var cgGeneros: ChipGroup
 
     private var paginaActual = 1
     private var totalPaginas = 1
@@ -79,9 +72,6 @@ class MainActivity : AppCompatActivity() {
         llUserLoggedIn = findViewById(R.id.ll_user_logged_in)
         tvUsername = findViewById(R.id.tv_username)
         ivSettings = findViewById(R.id.iv_settings)
-        llGenerosHeader = findViewById(R.id.ll_generos_header)
-        ivToggleGeneros = findViewById(R.id.iv_toggle_generos)
-        cgGeneros = findViewById(R.id.cg_generos)
 
         rvHistorias.layoutManager = LinearLayoutManager(this)
         
@@ -90,19 +80,9 @@ class MainActivity : AppCompatActivity() {
         }
         rvHistorias.adapter = adapter
 
-        configurarGeneros()
         checkUserSession()
         obtenerFavoritosYCargarHistorias()
-
-        llGenerosHeader.setOnClickListener {
-            if (cgGeneros.visibility == View.VISIBLE) {
-                cgGeneros.visibility = View.GONE
-                ivToggleGeneros.setImageResource(android.R.drawable.arrow_down_float)
-            } else {
-                cgGeneros.visibility = View.VISIBLE
-                ivToggleGeneros.setImageResource(android.R.drawable.arrow_up_float)
-            }
-        }
+        sincronizarTemaDesdeNube()
 
         btnAnterior.setOnClickListener { if (paginaActual > 1) { paginaActual--; cargarHistoriasDeFirebase() } }
         btnSiguiente.setOnClickListener { if (paginaActual < totalPaginas) { paginaActual++; cargarHistoriasDeFirebase() } }
@@ -124,17 +104,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun gestionarFavorito(historia: Historia) {
-        val user = auth.currentUser
-        if (user == null) {
-            Toast.makeText(this, "Inicia sesión para añadir a favoritos", Toast.LENGTH_SHORT).show()
-            return
-        }
-
+        val user = auth.currentUser ?: return
         val userRef = db.collection("usuarios").document(user.uid)
         val historiaRef = db.collection("historias").document(historia.idHistoria)
 
         if (listaFavoritosUsuario.contains(historia.idHistoria)) {
-            // CASO: QUITAR DE FAVORITOS (Sin mensajes flotantes)
             val userUpdate = hashMapOf("idFavoritas" to FieldValue.arrayRemove(historia.idHistoria))
             userRef.set(userUpdate, SetOptions.merge()).addOnSuccessListener {
                 val historiaUpdate = hashMapOf("numFavoritos" to FieldValue.increment(-1))
@@ -144,7 +118,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } else {
-            // CASO: AÑADIR A FAVORITOS (Sin mensajes flotantes)
             val userUpdate = hashMapOf("idFavoritas" to FieldValue.arrayUnion(historia.idHistoria))
             userRef.set(userUpdate, SetOptions.merge()).addOnSuccessListener {
                 val historiaUpdate = hashMapOf("numFavoritos" to FieldValue.increment(1))
@@ -167,16 +140,6 @@ class MainActivity : AppCompatActivity() {
                 adapter.actualizarDatos(lista, listaFavoritosUsuario)
                 actualizarVistaPaginacion()
             }
-    }
-
-    private fun configurarGeneros() {
-        val listaGeneros = listOf("Acción", "Aventura", "Comedia", "Drama", "Deportes", "Fantasía", "Magia", "Musical", "Psicológico", "Romance", "Superhéroes", "Terror", "Tragedia")
-        for (genero in listaGeneros) {
-            val chip = Chip(this)
-            chip.text = genero
-            chip.isCheckable = true
-            cgGeneros.addView(chip)
-        }
     }
 
     private fun checkUserSession() {
@@ -206,6 +169,7 @@ class MainActivity : AppCompatActivity() {
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.menu_ajustes -> { startActivity(Intent(this, SettingsActivity::class.java)); true }
+                R.id.menu_buscar -> { startActivity(Intent(this, SearchActivity::class.java)); true }
                 else -> false
             }
         }
@@ -233,21 +197,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sincronizarTemaDesdeNube() {
-        val user = auth.currentUser
-        if (user != null) {
-            db.collection("usuarios").document(user.uid).get().addOnSuccessListener { document ->
-                if (document.exists()) {
-                    val preferencias = document.get("preferencias") as? Map<*, *>
-                    val temaRemoto = preferencias?.get("tema") as? String
-                    temaRemoto?.let {
-                        val modeRemoto = when (it) {
-                            "claro" -> AppCompatDelegate.MODE_NIGHT_NO
-                            "oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
-                            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-                        }
-                        getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit().putInt("theme_mode", modeRemoto).apply()
-                        AppCompatDelegate.setDefaultNightMode(modeRemoto)
+        val user = auth.currentUser ?: return
+        db.collection("usuarios").document(user.uid).get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val preferencias = document.get("preferencias") as? Map<*, *>
+                val temaRemoto = preferencias?.get("tema") as? String
+                temaRemoto?.let {
+                    val modeRemoto = when (it) {
+                        "claro" -> AppCompatDelegate.MODE_NIGHT_NO
+                        "oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
+                        else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
                     }
+                    getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit().putInt("theme_mode", modeRemoto).apply()
+                    AppCompatDelegate.setDefaultNightMode(modeRemoto)
                 }
             }
         }
