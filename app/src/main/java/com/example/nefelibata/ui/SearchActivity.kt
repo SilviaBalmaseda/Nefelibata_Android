@@ -8,6 +8,7 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.nefelibata.R
 import com.example.nefelibata.adapters.HistoriaAdapter
 import com.example.nefelibata.models.Historia
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
@@ -35,6 +37,8 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var ivBack: ImageView
     private lateinit var llGenerosHeader: LinearLayout
     private lateinit var ivToggleGeneros: ImageView
+    private lateinit var btnBuscar: MaterialButton
+    private lateinit var tvSearchMessage: TextView
 
     private var listaHistoriasCompleta = mutableListOf<Historia>()
     private var listaFavoritosUsuario = mutableListOf<String>()
@@ -60,10 +64,11 @@ class SearchActivity : AppCompatActivity() {
         ivBack = findViewById(R.id.iv_back_search)
         llGenerosHeader = findViewById(R.id.ll_generos_header_search)
         ivToggleGeneros = findViewById(R.id.iv_toggle_generos_search)
+        btnBuscar = findViewById(R.id.btn_ejecutar_busqueda)
+        tvSearchMessage = findViewById(R.id.tv_search_message)
 
         ivBack.setOnClickListener { finish() }
 
-        // Lógica colapsable
         llGenerosHeader.setOnClickListener {
             if (cgGenres.visibility == View.VISIBLE) {
                 cgGenres.visibility = View.GONE
@@ -77,6 +82,8 @@ class SearchActivity : AppCompatActivity() {
         setupRecyclerView()
         setupFiltros()
         obtenerFavoritos()
+
+        btnBuscar.setOnClickListener { realizarBusqueda() }
     }
 
     private fun setupRecyclerView() {
@@ -91,20 +98,12 @@ class SearchActivity : AppCompatActivity() {
         val estados = listOf("Todos", "Pendiente", "En pausa", "Terminada", "Abandonada")
         actvStatus.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estados))
         actvStatus.setText("Todos", false)
-        actvStatus.setOnItemClickListener { _, _, _, _ -> realizarBusqueda() }
-
-        etSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { realizarBusqueda() }
-            override fun afterTextChanged(s: Editable?) {}
-        })
 
         val generos = listOf("Acción", "Aventura", "Comedia", "Drama", "Deportes", "Fantasía", "Magia", "Musical", "Psicológico", "Romance", "Superhéroes", "Terror", "Tragedia")
         for (g in generos) {
             val chip = Chip(this)
             chip.text = g
             chip.isCheckable = true
-            chip.setOnCheckedChangeListener { _, _ -> realizarBusqueda() }
             cgGenres.addView(chip)
         }
     }
@@ -128,7 +127,6 @@ class SearchActivity : AppCompatActivity() {
                 h.idHistoria = doc.id
                 h
             }.toMutableList()
-            adapter.actualizarDatos(emptyList(), listaFavoritosUsuario)
         }
     }
 
@@ -152,25 +150,47 @@ class SearchActivity : AppCompatActivity() {
     }
 
     private fun realizarBusqueda() {
-        val texto = etSearch.text.toString().trim().lowercase()
+        val texto = etSearch.text.toString().trim()
         val estadoSel = actvStatus.text.toString()
-        val idsMarcados = (0 until cgGenres.childCount)
+        val generosMarcados = (0 until cgGenres.childCount)
             .map { cgGenres.getChildAt(it) as Chip }
             .filter { it.isChecked }
             .map { it.text.toString().lowercase() }
 
-        if (texto.isEmpty() && estadoSel == "Todos" && idsMarcados.isEmpty()) {
+        // Validación: El texto debe tener al menos 3 caracteres
+        if (texto.isNotEmpty() && texto.length < 3) {
             adapter.actualizarDatos(emptyList(), listaFavoritosUsuario)
+            rvResultados.visibility = View.GONE
+            tvSearchMessage.visibility = View.VISIBLE
+            tvSearchMessage.text = "Escribe al menos 3 letras para buscar por texto"
+            return
+        }
+        
+        if (texto.isEmpty() && estadoSel == "Todos" && generosMarcados.isEmpty()) {
+            adapter.actualizarDatos(emptyList(), listaFavoritosUsuario)
+            rvResultados.visibility = View.GONE
+            tvSearchMessage.visibility = View.VISIBLE
+            tvSearchMessage.text = "Introduce algún criterio para empezar a buscar"
             return
         }
 
         val filtrada = listaHistoriasCompleta.filter { h ->
-            val cumpleTexto = texto.isEmpty() || h.titulo.lowercase().contains(texto) || h.autor.nombre.lowercase().contains(texto)
+            val cumpleTexto = texto.isEmpty() || h.titulo.lowercase().contains(texto.lowercase()) || h.autor.nombre.lowercase().contains(texto.lowercase())
             val cumpleEstado = estadoSel == "Todos" || h.obtenerEstadoValidado() == estadoSel
             val hGeneros = h.genero["es"]?.map { it.lowercase() } ?: emptyList()
-            val cumpleGeneros = idsMarcados.isEmpty() || hGeneros.containsAll(idsMarcados)
+            val cumpleGeneros = generosMarcados.isEmpty() || hGeneros.containsAll(generosMarcados)
             cumpleTexto && cumpleEstado && cumpleGeneros
         }
-        adapter.actualizarDatos(filtrada, listaFavoritosUsuario)
+
+        if (filtrada.isEmpty()) {
+            adapter.actualizarDatos(emptyList(), listaFavoritosUsuario)
+            rvResultados.visibility = View.GONE
+            tvSearchMessage.visibility = View.VISIBLE
+            tvSearchMessage.text = "No se han encontrado resultados para tu búsqueda"
+        } else {
+            tvSearchMessage.visibility = View.GONE
+            rvResultados.visibility = View.VISIBLE
+            adapter.actualizarDatos(filtrada, listaFavoritosUsuario)
+        }
     }
 }

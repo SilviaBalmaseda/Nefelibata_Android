@@ -77,6 +77,12 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // Validación: Nombre mínimo 3 caracteres (solo en registro)
+            if (!isLoginMode && nombre.replace(" ", "").length < 3) {
+                Toast.makeText(this, "El nombre debe tener al menos 3 caracteres", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             if (!isLoginMode && password.length < 6) {
                 Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
