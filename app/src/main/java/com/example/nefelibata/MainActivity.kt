@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.nefelibata.R
 import com.example.nefelibata.adapters.HistoriaAdapter
 import com.example.nefelibata.models.Historia
+import com.example.nefelibata.models.Usuario
 import com.example.nefelibata.ui.SearchActivity
 import com.example.nefelibata.ui.SettingsActivity
 import com.example.nefelibata.ui.auth.LoginActivity
@@ -94,7 +96,8 @@ class MainActivity : AppCompatActivity() {
         if (user != null) {
             db.collection("usuarios").document(user.uid).get()
                 .addOnSuccessListener { doc ->
-                    listaFavoritosUsuario = (doc.get("idFavoritas") as? List<*>)?.map { it.toString() }?.toMutableList() ?: mutableListOf()
+                    val usuario = doc.toObject(Usuario::class.java)
+                    listaFavoritosUsuario = usuario?.idFavoritas?.toMutableList() ?: mutableListOf()
                     calcularTotalPaginasYCargar()
                 }
                 .addOnFailureListener { calcularTotalPaginasYCargar() }
@@ -109,20 +112,20 @@ class MainActivity : AppCompatActivity() {
         val historiaRef = db.collection("historias").document(historia.idHistoria)
 
         if (listaFavoritosUsuario.contains(historia.idHistoria)) {
+            listaFavoritosUsuario.remove(historia.idHistoria)
             val userUpdate = hashMapOf("idFavoritas" to FieldValue.arrayRemove(historia.idHistoria))
             userRef.set(userUpdate, SetOptions.merge()).addOnSuccessListener {
                 val historiaUpdate = hashMapOf("numFavoritos" to FieldValue.increment(-1))
                 historiaRef.set(historiaUpdate, SetOptions.merge()).addOnSuccessListener {
-                    listaFavoritosUsuario.remove(historia.idHistoria)
                     cargarHistoriasDeFirebase()
                 }
             }
         } else {
+            listaFavoritosUsuario.add(historia.idHistoria)
             val userUpdate = hashMapOf("idFavoritas" to FieldValue.arrayUnion(historia.idHistoria))
             userRef.set(userUpdate, SetOptions.merge()).addOnSuccessListener {
                 val historiaUpdate = hashMapOf("numFavoritos" to FieldValue.increment(1))
                 historiaRef.set(historiaUpdate, SetOptions.merge()).addOnSuccessListener {
-                    listaFavoritosUsuario.add(historia.idHistoria)
                     cargarHistoriasDeFirebase()
                 }
             }
@@ -170,6 +173,10 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.menu_ajustes -> { startActivity(Intent(this, SettingsActivity::class.java)); true }
                 R.id.menu_buscar -> { startActivity(Intent(this, SearchActivity::class.java)); true }
+                R.id.menu_mis_historias -> { 
+                    Toast.makeText(this, "Funcionalidad de Mis Historias próximamente", Toast.LENGTH_SHORT).show()
+                    true 
+                }
                 else -> false
             }
         }
