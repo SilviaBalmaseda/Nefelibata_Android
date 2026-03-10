@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -11,6 +15,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Nefelibata">
+        
         <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="true">
@@ -19,18 +24,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
         <activity
             android:name=".MainActivity"
             android:exported="true" />
-        <activity
-            android:name=".ui.SettingsActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.LeerHistoriaActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.SearchActivity"
-            android:exported="false" />
+            
+        <activity android:name=".ui.SettingsActivity" android:exported="false" />
+        <activity android:name=".ui.LeerHistoriaActivity" android:exported="false" />
+        <activity android:name=".ui.SearchActivity" android:exported="false" />
+        <activity android:name=".ui.MisHistoriasActivity" android:exported="false" />
+        <activity android:name=".ui.CrearHistoriaActivity" android:exported="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+            
     </application>
 
 </manifest>

@@ -20,6 +20,7 @@ import com.example.nefelibata.R
 import com.example.nefelibata.adapters.HistoriaAdapter
 import com.example.nefelibata.models.Historia
 import com.example.nefelibata.models.Usuario
+import com.example.nefelibata.ui.MisHistoriasActivity
 import com.example.nefelibata.ui.SearchActivity
 import com.example.nefelibata.ui.SettingsActivity
 import com.example.nefelibata.ui.auth.LoginActivity
@@ -83,12 +84,17 @@ class MainActivity : AppCompatActivity() {
         rvHistorias.adapter = adapter
 
         checkUserSession()
-        obtenerFavoritosYCargarHistorias()
         sincronizarTemaDesdeNube()
 
         btnAnterior.setOnClickListener { if (paginaActual > 1) { paginaActual--; cargarHistoriasDeFirebase() } }
         btnSiguiente.setOnClickListener { if (paginaActual < totalPaginas) { paginaActual++; cargarHistoriasDeFirebase() } }
         ivSettings.setOnClickListener { view -> showUserMenu(view) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Recargamos los datos cada vez que el usuario vuelve a esta pantalla
+        obtenerFavoritosYCargarHistorias()
     }
 
     private fun obtenerFavoritosYCargarHistorias() {
@@ -174,7 +180,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.menu_ajustes -> { startActivity(Intent(this, SettingsActivity::class.java)); true }
                 R.id.menu_buscar -> { startActivity(Intent(this, SearchActivity::class.java)); true }
                 R.id.menu_mis_historias -> { 
-                    Toast.makeText(this, "Funcionalidad de Mis Historias próximamente", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, MisHistoriasActivity::class.java))
                     true 
                 }
                 else -> false
