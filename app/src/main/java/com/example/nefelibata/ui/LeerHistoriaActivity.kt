@@ -33,19 +33,12 @@ class LeerHistoriaActivity : AppCompatActivity() {
     private lateinit var idHistoria: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // APLICAR TEMA ANTES DE CUALQUIER OTRA COSA
         val sharedPrefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
         val modeSaved = sharedPrefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         AppCompatDelegate.setDefaultNightMode(modeSaved)
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_leer_historia)
-
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_leer)) { v, insets ->
-            val systemBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
 
         db = FirebaseFirestore.getInstance()
 
@@ -110,7 +103,9 @@ class LeerHistoriaActivity : AppCompatActivity() {
     }
 
     private fun configurarSelector() {
-        val titulos = listaCapitulos.map { it.tituloCap }
+        val titulos = listaCapitulos.map { 
+            if (it.tituloCap.isNullOrEmpty()) "Cap. ${it.numCapitulo}" else it.tituloCap 
+        }
         val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, titulos)
         selectorCapitulo.setAdapter(adapter)
 
@@ -140,10 +135,11 @@ class LeerHistoriaActivity : AppCompatActivity() {
         if (listaCapitulos.isEmpty()) return
 
         val capitulo = listaCapitulos[indiceActual]
-        tvTituloCapitulo.text = capitulo.tituloCap
+        // Mostrar "Cap X" si no hay título
+        tvTituloCapitulo.text = if (capitulo.tituloCap.isNullOrEmpty()) "Cap. ${capitulo.numCapitulo}" else capitulo.tituloCap
         tvContenidoCapitulo.text = capitulo.historiaCap
         
-        selectorCapitulo.setText(capitulo.tituloCap, false)
+        selectorCapitulo.setText(if (capitulo.tituloCap.isNullOrEmpty()) "Cap. ${capitulo.numCapitulo}" else capitulo.tituloCap, false)
 
         btnAnterior.isEnabled = indiceActual > 0
         btnSiguiente.isEnabled = indiceActual < listaCapitulos.size - 1

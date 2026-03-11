@@ -60,7 +60,6 @@ class HistoriaAdapter(
             onFavoritoClick(historia)
         }
 
-        // Lógica del botón Leer (AÑADIDO SIN MODIFICAR EL RESTO)
         holder.btnLeer.setOnClickListener {
             val intent = Intent(holder.itemView.context, LeerHistoriaActivity::class.java).apply {
                 putExtra("idHistoria", historia.idHistoria)
@@ -81,20 +80,28 @@ class HistoriaAdapter(
             }
         }
 
-        // Carga de imagen (SE MANTIENE INTACTO)
+        // --- SOLUCIÓN DEFINITIVA AL RECICLAJE DE IMÁGENES ---
+        // 1. Limpiamos la imagen y ponemos el placeholder neutro inmediatamente
+        holder.ivImagen.tag = historia.idHistoria
+        holder.ivImagen.setImageResource(android.R.drawable.ic_menu_gallery)
+
         if (historia.imagenUrl.isNotEmpty()) {
+            val currentId = historia.idHistoria
             val storageRef = FirebaseStorage.getInstance().getReference(historia.imagenUrl)
             storageRef.downloadUrl.addOnSuccessListener { uri ->
-                holder.ivImagen.load(uri) {
-                    crossfade(true)
-                    placeholder(R.drawable.logo)
-                    error(android.R.drawable.ic_menu_gallery)
+                // 2. Solo cargamos la foto si la tarjeta sigue siendo para la misma historia
+                if (holder.ivImagen.tag == currentId) {
+                    holder.ivImagen.load(uri) {
+                        crossfade(true)
+                        placeholder(android.R.drawable.ic_menu_gallery)
+                        error(android.R.drawable.ic_menu_gallery)
+                    }
                 }
             }.addOnFailureListener {
-                holder.ivImagen.setImageResource(android.R.drawable.ic_menu_gallery)
+                if (holder.ivImagen.tag == currentId) {
+                    holder.ivImagen.setImageResource(android.R.drawable.ic_menu_gallery)
+                }
             }
-        } else {
-            holder.ivImagen.setImageResource(android.R.drawable.ic_menu_gallery)
         }
     }
 

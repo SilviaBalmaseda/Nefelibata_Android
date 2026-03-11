@@ -1,5 +1,7 @@
 package com.example.nefelibata.models
 
+import com.example.nefelibata.utils.Constants
+import com.google.firebase.Timestamp
 import java.util.Locale
 
 data class Historia(
@@ -10,27 +12,25 @@ data class Historia(
     var numFavoritos: Int = 0,
     var sinopsis: String = "",
     var estado: Map<String, String> = emptyMap(),
-    var genero: Map<String, List<String>> = emptyMap()
+    var genero: Map<String, List<String>> = emptyMap(),
+    var contCapitulos: Long = 0,
+    var ultimoNumCap: Long = 0,
+    var fechaCreacionH: Timestamp? = null,
+    var fechaModificacionH: Timestamp? = null
 ) {
     fun obtenerEstadoValidado(): String {
         val valorEs = estado["es"]?.lowercase()?.replaceFirstChar { 
             if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() 
-        } ?: "Pendiente"
-        
-        val estadosPermitidos = listOf("Pendiente", "En pausa", "Terminada", "Abandonada")
-        return if (estadosPermitidos.contains(valorEs)) valorEs else "Pendiente"
+        } ?: Constants.ESTADOS.first()
+        return if (Constants.ESTADOS.contains(valorEs)) valorEs else Constants.ESTADOS.first()
     }
 
     fun obtenerGenerosValidados(): String {
-        // Extraemos la lista en español
         val listaEs = genero["es"]
-        return if (listaEs.isNullOrEmpty()) {
-            "Ninguno"
-        } else {
-            listaEs.joinToString(", ") {
-                it.lowercase().replaceFirstChar { char ->
-                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
-                }
+        return if (listaEs.isNullOrEmpty()) "Ninguno"
+        else listaEs.joinToString(", ") {
+            it.lowercase().replaceFirstChar { char ->
+                if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
             }
         }
     }

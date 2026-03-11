@@ -34,6 +34,8 @@
         <activity android:name=".ui.SearchActivity" android:exported="false" />
         <activity android:name=".ui.MisHistoriasActivity" android:exported="false" />
         <activity android:name=".ui.CrearHistoriaActivity" android:exported="false" />
+        <activity android:name=".ui.GestionCapitulosActivity" android:exported="false" />
+        <activity android:name=".ui.EditorCapituloActivity" android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -2,6 +2,7 @@ package com.example.nefelibata.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -15,8 +16,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.nefelibata.R
 import com.example.nefelibata.adapters.MisHistoriasAdapter
 import com.example.nefelibata.models.Historia
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MisHistoriasActivity : AppCompatActivity() {
@@ -91,18 +94,45 @@ class MisHistoriasActivity : AppCompatActivity() {
     }
 
     private fun mostrarConfirmacionEliminar(historia: Historia) {
-        AlertDialog.Builder(this)
-            .setTitle("Eliminar historia")
-            .setMessage("¿Seguro que quieres eliminar esta historia? Esta acción no se puede deshacer.")
-            .setPositiveButton("Eliminar") { _, _ ->
-                db.collection("historias").document(historia.idHistoria)
-                    .delete()
-                    .addOnSuccessListener {
-                        Toast.makeText(this, "Historia eliminada", Toast.LENGTH_SHORT).show()
-                        cargarMisHistorias()
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_confirm_delete, null)
+        val builder = AlertDialog.Builder(this)
+        builder.setView(dialogView)
+        
+        val dialog = builder.create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btn_cancel_delete)
+        val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btn_confirm_delete)
+
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        btnConfirm.setOnClickListener {
+            eliminarHistoriaYFavoritos(historia.idHistoria)
+            dialog.dismiss()
+        }
+        
+        dialog.show()
+    }
+
+    private fun eliminarHistoriaYFavoritos(idHistoria: String) {
+        db.collection("historias").document(idHistoria)
+            .delete()
+            .addOnSuccessListener {
+                db.collection("usuarios")
+                    .whereArrayContains("idFavoritas", idHistoria)
+                    .get()
+                    .addOnSuccessListener { querySnapshot ->
+                        val batch = db.batch()
+                        for (doc in querySnapshot.documents) {
+                            batch.update(doc.reference, "idFavoritas", FieldValue.arrayRemove(idHistoria))
+                        }
+                        batch.commit().addOnCompleteListener {
+                            Toast.makeText(this, "Historia eliminada", Toast.LENGTH_SHORT).show()
+                            cargarMisHistorias()
+                        }
                     }
             }
-            .setNegativeButton("Cancelar", null)
-            .show()
     }
 }

@@ -1,6 +1,7 @@
 package com.example.nefelibata.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -13,10 +14,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.example.nefelibata.R
 import com.example.nefelibata.models.Autor
 import com.example.nefelibata.models.Historia
+import com.example.nefelibata.utils.Constants
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -44,30 +48,25 @@ class CrearHistoriaActivity : AppCompatActivity() {
     private lateinit var etContenidoCap: TextInputEditText
     private lateinit var btnGuardar: MaterialButton
     private lateinit var ivToggle: ImageView
+    private lateinit var capSection: View
+    private lateinit var ivPortadaPrevia: ImageView
+    private lateinit var cvPortadaPrevia: View
+    private lateinit var btnSubirPortada: MaterialButton
     
     private var imageUri: Uri? = null
     private var cameraUri: Uri? = null
+    private var idHistoriaEdicion: String? = null
 
-    // Lanzadores
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { imageUri = it; Toast.makeText(this, "Foto de galería cargada", Toast.LENGTH_SHORT).show() }
+        uri?.let { imageUri = it; Toast.makeText(this, "Foto seleccionada", Toast.LENGTH_SHORT).show() }
     }
 
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) { imageUri = cameraUri; Toast.makeText(this, "Foto de cámara cargada", Toast.LENGTH_SHORT).show() }
+        if (success) { imageUri = cameraUri; Toast.makeText(this, "Foto capturada", Toast.LENGTH_SHORT).show() }
     }
 
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        val cameraGranted = permissions[Manifest.permission.CAMERA] ?: false
-        val galleryGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions[Manifest.permission.READ_MEDIA_IMAGES] ?: false
-        } else {
-            permissions[Manifest.permission.READ_EXTERNAL_STORAGE] ?: false
-        }
-        
-        if (cameraGranted || galleryGranted) {
-            Toast.makeText(this, "Permisos concedidos. Vuelve a elegir la opción.", Toast.LENGTH_SHORT).show()
-        }
+        if (permissions[Manifest.permission.CAMERA] == true) abrirCamara()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,31 +85,73 @@ class CrearHistoriaActivity : AppCompatActivity() {
         etContenidoCap = findViewById(R.id.et_crear_contenido_cap)
         btnGuardar = findViewById(R.id.btn_guardar_historia)
         ivToggle = findViewById(R.id.iv_toggle_generos_crear)
-        
+        capSection = findViewById(R.id.ll_seccion_primer_capitulo)
+        ivPortadaPrevia = findViewById(R.id.iv_crear_portada_previa)
+        cvPortadaPrevia = findViewById(R.id.cv_portada_previa)
+        btnSubirPortada = findViewById(R.id.btn_subir_portada)
+
         findViewById<ImageView>(R.id.iv_back_crear).setOnClickListener { finish() }
-        findViewById<MaterialButton>(R.id.btn_subir_portada).setOnClickListener { mostrarDialogoSeleccion() }
+        btnSubirPortada.setOnClickListener { mostrarDialogoFoto() }
+
+        val btnGestionarCaps = findViewById<MaterialButton>(R.id.btn_gestionar_capitulos)
 
         findViewById<LinearLayout>(R.id.ll_generos_header_crear).setOnClickListener {
-            if (cgGeneros.visibility == View.VISIBLE) {
-                cgGeneros.visibility = View.GONE
-                ivToggle.setImageResource(android.R.drawable.arrow_down_float)
-            } else {
-                cgGeneros.visibility = View.VISIBLE
-                ivToggle.setImageResource(android.R.drawable.arrow_up_float)
-            }
+            cgGeneros.isVisible = !cgGeneros.isVisible
+            ivToggle.setImageResource(if (cgGeneros.isVisible) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float)
         }
 
         setupFormulario()
-        btnGuardar.setOnClickListener { publicarHistoria() }
+
+        idHistoriaEdicion = intent.getStringExtra("idHistoria")
+        if (idHistoriaEdicion != null) {
+            configurarModoEdicion(idHistoriaEdicion!!)
+            btnGestionarCaps.visibility = View.VISIBLE
+            btnGestionarCaps.setOnClickListener {
+                val intent = Intent(this, GestionCapitulosActivity::class.java)
+                intent.putExtra("idHistoria", idHistoriaEdicion)
+                startActivity(intent)
+            }
+        } else {
+            btnSubirPortada.text = "AÑADIR PORTADA"
+        }
+
+        btnGuardar.setOnClickListener { guardarCambios() }
     }
 
-    private fun mostrarDialogoSeleccion() {
+    private fun configurarModoEdicion(id: String) {
+        findViewById<TextView>(R.id.tv_crear_historia_title).text = "EDITAR HISTORIA"
+        btnGuardar.text = "ACTUALIZAR HISTORIA"
+        btnSubirPortada.text = "EDITAR PORTADA" 
+        capSection.isVisible = false
+
+        db.collection("historias").document(id).get().addOnSuccessListener { doc ->
+            val historia = doc.toObject(Historia::class.java)
+            historia?.let {
+                etTitulo.setText(it.titulo)
+                etSinopsis.setText(it.sinopsis)
+                actvEstado.setText(it.estado["es"], false)
+                
+                if (it.imagenUrl.isNotEmpty()) {
+                    cvPortadaPrevia.visibility = View.VISIBLE
+                    storage.getReference(it.imagenUrl).downloadUrl.addOnSuccessListener { uri ->
+                        ivPortadaPrevia.load(uri)
+                    }
+                }
+
+                val generosActuales = it.genero["es"] ?: emptyList()
+                for (i in 0 until cgGeneros.childCount) {
+                    val chip = cgGeneros.getChildAt(i) as Chip
+                    if (generosActuales.contains(chip.text.toString())) chip.isChecked = true
+                }
+            }
+        }
+    }
+
+    private fun mostrarDialogoFoto() {
         val opciones = arrayOf("Cámara", "Galería")
-        AlertDialog.Builder(this)
-            .setTitle("Seleccionar Portada")
-            .setItems(opciones) { _, which ->
-                if (which == 0) checkCameraPermission() else checkGalleryPermission()
-            }.show()
+        AlertDialog.Builder(this).setItems(opciones) { _, which ->
+            if (which == 0) checkCameraPermission() else galleryLauncher.launch("image/*")
+        }.show()
     }
 
     private fun checkCameraPermission() {
@@ -121,33 +162,16 @@ class CrearHistoriaActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkGalleryPermission() {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_IMAGES
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            galleryLauncher.launch("image/*")
-        } else {
-            permissionLauncher.launch(arrayOf(permission))
-        }
-    }
-
     private fun abrirCamara() {
-        val photoFile = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "temp_portada_${System.currentTimeMillis()}.jpg")
-        cameraUri = FileProvider.getUriForFile(this, "${applicationContext.packageName}.fileprovider", photoFile)
+        val photoFile = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "temp_${System.currentTimeMillis()}.jpg")
+        cameraUri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", photoFile)
         cameraUri?.let { cameraLauncher.launch(it) }
     }
 
     private fun setupFormulario() {
-        val estados = listOf("Pendiente", "En pausa", "Terminada", "Abandonada")
-        actvEstado.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estados))
-        actvEstado.setText("Pendiente", false)
-
-        val listaGeneros = listOf("Acción", "Aventura", "Comedia", "Drama", "Deportes", "Fantasía", "Magia", "Musical", "Psicológico", "Romance", "Superhéroes", "Terror", "Tragedia")
-        for (g in listaGeneros) {
+        actvEstado.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, Constants.ESTADOS))
+        actvEstado.setText(Constants.ESTADOS.first(), false)
+        for (g in Constants.GENEROS) {
             val chip = Chip(this)
             chip.text = g
             chip.isCheckable = true
@@ -155,22 +179,19 @@ class CrearHistoriaActivity : AppCompatActivity() {
         }
     }
 
-    private fun publicarHistoria() {
+    private fun guardarCambios() {
         val titulo = etTitulo.text.toString().trim()
-        val contenidoCap = etContenidoCap.text.toString().trim()
-
-        if (titulo.isEmpty() || contenidoCap.isEmpty()) {
-            Toast.makeText(this, "Título e Historia son obligatorios", Toast.LENGTH_SHORT).show()
+        if (titulo.isEmpty()) {
+            Toast.makeText(this, "El título es obligatorio", Toast.LENGTH_SHORT).show()
             return
         }
 
         btnGuardar.isEnabled = false
-        btnGuardar.text = "PUBLICANDO..."
+        btnGuardar.text = "GUARDANDO..."
 
         lifecycleScope.launch {
             try {
                 val user = auth.currentUser ?: return@launch
-                
                 var downloadUrl = ""
                 if (imageUri != null) {
                     val ref = storage.reference.child("portadas/${UUID.randomUUID()}.jpg")
@@ -178,49 +199,50 @@ class CrearHistoriaActivity : AppCompatActivity() {
                     downloadUrl = ref.path
                 }
 
-                val userDoc = db.collection("usuarios").document(user.uid).get().await()
-                val nombreAutor = userDoc.getString("nombre") ?: "Anónimo"
-
                 val generosSel = mutableListOf<String>()
                 for (i in 0 until cgGeneros.childCount) {
                     val chip = cgGeneros.getChildAt(i) as Chip
                     if (chip.isChecked) generosSel.add(chip.text.toString())
                 }
-                if (generosSel.isEmpty()) generosSel.add("Ninguno")
 
-                val historiaRef = db.collection("historias").document()
-                val nuevaHistoria = hashMapOf(
-                    "idHistoria" to historiaRef.id,
+                val data = mutableMapOf<String, Any>(
                     "titulo" to titulo,
                     "sinopsis" to etSinopsis.text.toString().trim(),
-                    "imagenUrl" to downloadUrl,
                     "estado" to mapOf("es" to actvEstado.text.toString()),
-                    "genero" to mapOf("es" to generosSel),
-                    "autor" to Autor(id = user.uid, nombre = nombreAutor),
-                    "numFavoritos" to 0,
-                    "fechaCreacionH" to Timestamp.now(),
-                    "contCapitulos" to 1,
-                    "ultimoNumCap" to 1
+                    "genero" to mapOf("es" to if(generosSel.isEmpty()) listOf("Ninguno") else generosSel),
+                    "fechaModificacionH" to Timestamp.now()
                 )
-                historiaRef.set(nuevaHistoria).await()
+                if (downloadUrl.isNotEmpty()) data["imagenUrl"] = downloadUrl
 
-                val capRef = historiaRef.collection("capitulos").document()
-                val primerCapitulo = hashMapOf(
-                    "idCapitulo" to capRef.id,
-                    "numCapitulo" to 1L,
-                    "tituloCap" to etTituloCap.text.toString().trim(),
-                    "historiaCap" to contenidoCap,
-                    "fechaCreacionC" to Timestamp.now()
-                )
-                capRef.set(primerCapitulo).await()
+                if (idHistoriaEdicion == null) {
+                    val ref = db.collection("historias").document()
+                    data["idHistoria"] = ref.id
+                    data["autor"] = Autor(id = user.uid, nombre = db.collection("usuarios").document(user.uid).get().await().getString("nombre") ?: "Anónimo")
+                    data["numFavoritos"] = 0
+                    data["fechaCreacionH"] = Timestamp.now()
+                    data["contCapitulos"] = 1L
+                    data["ultimoNumCap"] = 1L
+                    ref.set(data).await()
 
-                Toast.makeText(this@CrearHistoriaActivity, "¡Historia publicada con éxito!", Toast.LENGTH_SHORT).show()
+                    val capRef = ref.collection("capitulos").document()
+                    capRef.set(hashMapOf(
+                        "idCapitulo" to capRef.id,
+                        "numCapitulo" to 1L,
+                        "tituloCap" to etTituloCap.text.toString().trim(),
+                        "historiaCap" to etContenidoCap.text.toString().trim(),
+                        "fechaCreacionC" to Timestamp.now(),
+                        "fechaModificacionC" to Timestamp.now()
+                    )).await()
+                } else {
+                    db.collection("historias").document(idHistoriaEdicion!!).update(data).await()
+                }
+
+                Toast.makeText(this@CrearHistoriaActivity, "¡Éxito!", Toast.LENGTH_SHORT).show()
                 finish()
-
             } catch (e: Exception) {
                 Toast.makeText(this@CrearHistoriaActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 btnGuardar.isEnabled = true
-                btnGuardar.text = "PUBLICAR HISTORIA"
+                btnGuardar.text = "GUARDAR"
             }
         }
     }

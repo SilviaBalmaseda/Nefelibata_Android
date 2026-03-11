@@ -26,16 +26,16 @@
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_revert"
-            android:contentDescription="Volver atrás"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/black" />
 
         <TextView
+            android:id="@+id/tv_crear_historia_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PUBLICAR HISTORIA"
+            android:text="CREAR HISTORIA"
             android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -57,14 +57,44 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- PORTADA -->
+            <!-- Portada Previa (Variable cv_portada_previa en Kotlin) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cv_portada_previa"
+                android:layout_width="140dp"
+                android:layout_height="190dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                tools:visibility="visible">
+                <ImageView
+                    android:id="@+id/iv_crear_portada_previa"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:background="?attr/colorOutline" />
+            </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_subir_portada"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="AÑADIR PORTADA / FOTO"
+                android:text="AÑADIR PORTADA"
                 app:icon="@android:drawable/ic_menu_camera"
+                app:cornerRadius="12dp" />
+
+            <!-- Botón Gestionar Capítulos -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_gestionar_capitulos"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="16dp"
+                android:text="GESTIONAR CAPÍTULOS"
+                android:visibility="gone"
+                app:icon="@android:drawable/ic_menu_sort_by_size"
                 app:cornerRadius="12dp" />
 
             <!-- DATOS HISTORIA -->
@@ -74,7 +104,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:hint="Título de la historia *">
-
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_crear_titulo"
                     android:layout_width="match_parent"
@@ -88,7 +117,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:hint="Sinopsis">
-
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_crear_sinopsis"
                     android:layout_width="match_parent"
@@ -104,7 +132,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:hint="Estado">
-
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/actv_crear_estado"
                     android:layout_width="match_parent"
@@ -114,7 +141,6 @@
                     tools:ignore="SpeakableTextPresentCheck" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- GÉNEROS COLAPSABLES (MODO RECUADRO) -->
             <LinearLayout
                 android:id="@+id/ll_generos_header_crear"
                 android:layout_width="wrap_content"
@@ -127,7 +153,6 @@
                 android:focusable="true"
                 android:background="?attr/selectableItemBackground"
                 android:padding="8dp">
-
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -135,7 +160,6 @@
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     android:textStyle="bold" />
-
                 <ImageView
                     android:id="@+id/iv_toggle_generos_crear"
                     android:layout_width="24dp"
@@ -149,57 +173,62 @@
                 android:id="@+id/cg_crear_generos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
                 android:layout_marginTop="8dp"
                 android:visibility="gone"
                 app:chipSpacingHorizontal="8dp"
                 app:chipSpacingVertical="8dp"
                 app:singleLine="false" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="24dp"
-                android:background="?attr/colorOutline" />
-
-            <!-- DATOS CAPÍTULO 1 -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="PRIMER CAPÍTULO"
-                android:textColor="?attr/colorPrimary"
-                android:textStyle="bold"
-                android:textSize="16sp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <LinearLayout
+                android:id="@+id/ll_seccion_primer_capitulo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="Título del capítulo">
+                android:orientation="vertical">
+                
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="24dp"
+                    android:background="?attr/colorOutline" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_crear_titulo_cap"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="PRIMER CAPÍTULO"
+                    android:textColor="?attr/colorPrimary"
+                    android:textStyle="bold"
+                    android:textSize="16sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textCapSentences" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_marginTop="12dp"
+                    android:hint="Título del capítulo">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_crear_titulo_cap"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textCapSentences" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:hint="Contenido del capítulo *">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/et_crear_contenido_cap"
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="top"
-                    android:inputType="textMultiLine"
-                    android:minLines="6" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_marginTop="12dp"
+                    android:hint="Contenido del capítulo *">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_crear_contenido_cap"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="top"
+                        android:inputType="textMultiLine"
+                        android:minLines="6" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_guardar_historia"
@@ -212,5 +241,4 @@
 
         </LinearLayout>
     </ScrollView>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

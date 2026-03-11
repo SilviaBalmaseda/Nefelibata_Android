@@ -35,18 +35,26 @@ class MisHistoriasAdapter(
         holder.tvTitulo.text = historia.titulo
         holder.tvEstado.text = "Estado: ${historia.obtenerEstadoValidado()}"
 
-        // Carga de imagen con Coil
+        // --- SOLUCIÓN AL ERROR DE IMÁGENES RECICLADAS Y PLACEHOLDER ---
+        holder.ivPortada.setImageResource(android.R.drawable.ic_menu_gallery)
+        val currentId = historia.idHistoria
+        holder.ivPortada.tag = currentId
+
         if (historia.imagenUrl.isNotEmpty()) {
             val storageRef = FirebaseStorage.getInstance().getReference(historia.imagenUrl)
             storageRef.downloadUrl.addOnSuccessListener { uri ->
-                holder.ivPortada.load(uri) {
-                    crossfade(true)
-                    placeholder(R.drawable.logo)
-                    error(android.R.drawable.ic_menu_gallery)
+                if (holder.ivPortada.tag == currentId) {
+                    holder.ivPortada.load(uri) {
+                        crossfade(true)
+                        placeholder(android.R.drawable.ic_menu_gallery)
+                        error(android.R.drawable.ic_menu_gallery)
+                    }
+                }
+            }.addOnFailureListener {
+                if (holder.ivPortada.tag == currentId) {
+                    holder.ivPortada.setImageResource(android.R.drawable.ic_menu_gallery)
                 }
             }
-        } else {
-            holder.ivPortada.setImageResource(android.R.drawable.ic_menu_gallery)
         }
 
         holder.ivEdit.setOnClickListener { onEditClick(historia) }
