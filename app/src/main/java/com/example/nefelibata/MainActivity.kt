@@ -4,26 +4,24 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.nefelibata.R
 import com.example.nefelibata.adapters.HistoriaAdapter
 import com.example.nefelibata.models.Historia
 import com.example.nefelibata.models.Usuario
 import com.example.nefelibata.ui.MisHistoriasActivity
 import com.example.nefelibata.ui.SearchActivity
 import com.example.nefelibata.ui.SettingsActivity
-import com.example.nefelibata.ui.auth.LoginActivity
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -31,6 +29,9 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import kotlin.math.ceil
+import com.example.nefelibata.R
+import com.example.nefelibata.ui.auth.LoginActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,7 +48,7 @@ class MainActivity : AppCompatActivity() {
 
     private var paginaActual = 1
     private var totalPaginas = 1
-    private val HISTORIAS_POR_PAGINA = 5L
+    private val historiasPorPagina = 5L
     
     private var listaFavoritosUsuario = mutableListOf<String>()
 
@@ -93,7 +94,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Recargamos los datos cada vez que el usuario vuelve a esta pantalla
         obtenerFavoritosYCargarHistorias()
     }
 
@@ -139,7 +139,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun cargarHistoriasDeFirebase() {
-        db.collection("historias").orderBy("titulo").limit(HISTORIAS_POR_PAGINA).get()
+        db.collection("historias").orderBy("titulo").limit(historiasPorPagina).get()
             .addOnSuccessListener { documentos ->
                 val lista = documentos.map { doc ->
                     val h = doc.toObject(Historia::class.java)
@@ -167,7 +167,7 @@ class MainActivity : AppCompatActivity() {
         db.collection("historias").count().get(com.google.firebase.firestore.AggregateSource.SERVER)
             .addOnSuccessListener { snapshot ->
                 val total = snapshot.count
-                totalPaginas = Math.ceil(total.toDouble() / HISTORIAS_POR_PAGINA).toInt().coerceAtLeast(1)
+                totalPaginas = ceil(total.toDouble() / historiasPorPagina).toInt().coerceAtLeast(1)
                 cargarHistoriasDeFirebase()
             }
     }
@@ -175,6 +175,16 @@ class MainActivity : AppCompatActivity() {
     private fun showUserMenu(view: View) {
         val popup = PopupMenu(this, view)
         popup.menuInflater.inflate(R.menu.user_menu, popup.menu)
+        
+        try {
+            val fieldMPopup = PopupMenu::class.java.getDeclaredField("mPopup")
+            fieldMPopup.isAccessible = true
+            val mPopup = fieldMPopup.get(popup)
+            mPopup.javaClass.getDeclaredMethod("setForceShowIcon", Boolean::class.java).invoke(mPopup, true)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error mostrando iconos en el menú", e)
+        }
+
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.menu_ajustes -> { startActivity(Intent(this, SettingsActivity::class.java)); true }

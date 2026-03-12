@@ -26,6 +26,7 @@
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Volver atrás"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -73,6 +74,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
+                    android:contentDescription="Vista previa de la portada"
                     android:background="?attr/colorOutline" />
             </com.google.android.material.card.MaterialCardView>
 
@@ -165,6 +167,7 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginStart="8dp"
+                    android:contentDescription="Desplegar géneros"
                     android:src="@android:drawable/arrow_down_float"
                     app:tint="?attr/colorOnSurface" />
             </LinearLayout>

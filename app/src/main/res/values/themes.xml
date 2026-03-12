@@ -25,4 +25,9 @@
         <item name="backgroundTint">@color/primary_blue</item>
         <item name="android:textColor">@color/white</item>
     </style>
+
+    <!-- Estilo para imagen circular -->
+    <style name="CircleImage" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>

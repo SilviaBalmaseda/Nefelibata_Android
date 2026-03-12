@@ -2,14 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/menu_buscar"
-        android:icon="@android:drawable/ic_menu_search"
+        android:icon="@drawable/ic_search"
         android:title="Buscar" />
     <item
         android:id="@+id/menu_mis_historias"
-        android:icon="@android:drawable/ic_menu_edit"
+        android:icon="@drawable/ic_book"
         android:title="Mis historias" />
     <item
         android:id="@+id/menu_ajustes"
-        android:icon="@android:drawable/ic_menu_preferences"
+        android:icon="@drawable/ic_settings"
         android:title="Ajustes" />
 </menu>
