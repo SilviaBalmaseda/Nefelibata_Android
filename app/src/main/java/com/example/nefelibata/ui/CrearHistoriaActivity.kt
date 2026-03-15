@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
@@ -85,7 +84,7 @@ class CrearHistoriaActivity : AppCompatActivity() {
         etContenidoCap = findViewById(R.id.et_crear_contenido_cap)
         btnGuardar = findViewById(R.id.btn_guardar_historia)
         ivToggle = findViewById(R.id.iv_toggle_generos_crear)
-        capSection = findViewById(R.id.ll_seccion_primer_capitulo)
+        capSection = findViewById<View>(R.id.ll_seccion_primer_capitulo)
         ivPortadaPrevia = findViewById(R.id.iv_crear_portada_previa)
         cvPortadaPrevia = findViewById(R.id.cv_portada_previa)
         btnSubirPortada = findViewById(R.id.btn_subir_portada)
@@ -181,8 +180,10 @@ class CrearHistoriaActivity : AppCompatActivity() {
 
     private fun guardarCambios() {
         val titulo = etTitulo.text.toString().trim()
-        if (titulo.isEmpty()) {
-            Toast.makeText(this, "El título es obligatorio", Toast.LENGTH_SHORT).show()
+        
+        // VALIDACIÓN: Usamos la constante centralizada
+        if (titulo.length < Constants.MIN_STORY_TITLE_LENGTH) {
+            Toast.makeText(this, "El título debe tener al menos ${Constants.MIN_STORY_TITLE_LENGTH} caracteres", Toast.LENGTH_SHORT).show()
             return
         }
 

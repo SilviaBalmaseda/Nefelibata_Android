@@ -43,7 +43,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
 
         try {
-            // Sincronización con el XML: el botón se llama btn_leer_ver_autor
+            // IDs vinculados al nuevo diseño dentro del folio blanco
             tvTituloHistoria = findViewById(R.id.tv_leer_titulo_historia)
             btnNombreAutor = findViewById(R.id.btn_leer_ver_autor) 
             tvTituloCapitulo = findViewById(R.id.tv_leer_titulo_capitulo)
@@ -74,7 +74,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
 
             configurarBotones()
         } catch (e: Exception) {
-            Log.e("LeerHistoria", "Error al inicializar vistas: ${e.message}")
+            Log.e("LeerHistoria", "Error inicializando vistas: ${e.message}")
             finish()
         }
     }
@@ -89,7 +89,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
                     idAutorActual = it.autor.id
                 }
             } catch (e: Exception) {
-                Log.e("LeerHistoria", "Error mapeando datos")
+                Log.e("LeerHistoria", "Error mapeando historia")
             }
         }
     }

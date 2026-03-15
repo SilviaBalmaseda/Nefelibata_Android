@@ -3,11 +3,13 @@ package com.example.nefelibata.ui
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,8 +33,10 @@ class PerfilAutorActivity : AppCompatActivity() {
     private lateinit var btnSeguir: MaterialButton
     private lateinit var tvSeguidores: TextView
     private lateinit var ivToggle: ImageView
+    private lateinit var ivFoto: ImageView
     
     private var idAutor: String = ""
+    private var fotoUrlAutor: String? = null
     private var listaSiguiendoUsuario = mutableListOf<String>()
     private var numSeguidoresActual = 0
 
@@ -50,7 +54,7 @@ class PerfilAutorActivity : AppCompatActivity() {
         val ivBack = findViewById<ImageView>(R.id.iv_back_perfil)
         val tvNombre = findViewById<TextView>(R.id.tv_perfil_nombre)
         tvSeguidores = findViewById(R.id.tv_perfil_seguidores)
-        val ivFoto = findViewById<ImageView>(R.id.iv_perfil_foto)
+        ivFoto = findViewById(R.id.iv_perfil_foto)
         btnSeguir = findViewById(R.id.btn_perfil_seguir)
         rvHistorias = findViewById(R.id.rv_perfil_historias)
         ivToggle = findViewById(R.id.iv_perfil_toggle_obras)
@@ -69,12 +73,34 @@ class PerfilAutorActivity : AppCompatActivity() {
             }
         }
 
+        // Lógica para ampliar foto
+        ivFoto.setOnClickListener { mostrarImagenAmpliada() }
+
         setupRecyclerView()
         obtenerDatosUsuarioLogueado()
-        cargarDatosAutor(tvNombre, ivFoto)
+        cargarDatosAutor(tvNombre)
         cargarObrasAutor()
 
         btnSeguir.setOnClickListener { gestionarSeguimiento() }
+    }
+
+    private fun mostrarImagenAmpliada() {
+        if (fotoUrlAutor.isNullOrEmpty()) return
+
+        val builder = AlertDialog.Builder(this)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_viewer, null)
+        val ivFull = dialogView.findViewById<ImageView>(R.id.iv_full_image)
+        
+        ivFull.load(fotoUrlAutor) {
+            crossfade(true)
+            placeholder(android.R.drawable.ic_menu_gallery)
+        }
+
+        builder.setView(dialogView)
+        val dialog = builder.create()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialogView.setOnClickListener { dialog.dismiss() }
+        dialog.show()
     }
 
     private fun obtenerDatosUsuarioLogueado() {
@@ -89,25 +115,20 @@ class PerfilAutorActivity : AppCompatActivity() {
     private fun gestionarSeguimiento() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            Toast.makeText(this, "Inicia sesión para seguir autores", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Inicia sesión", Toast.LENGTH_SHORT).show()
             return
         }
-        if (currentUser.uid == idAutor) {
-            Toast.makeText(this, "No puedes seguirte a ti mismo", Toast.LENGTH_SHORT).show()
-            return
-        }
+        if (currentUser.uid == idAutor) return
 
         val userRef = db.collection("usuarios").document(currentUser.uid)
         val autorRef = db.collection("usuarios").document(idAutor)
 
         if (listaSiguiendoUsuario.contains(idAutor)) {
-            // DEJAR DE SEGUIR (Optimista)
             listaSiguiendoUsuario.remove(idAutor)
             numSeguidoresActual--
             userRef.update("idSiguiendo", FieldValue.arrayRemove(idAutor))
             autorRef.update("numSeguidor", FieldValue.increment(-1))
         } else {
-            // SEGUIR (Optimista)
             listaSiguiendoUsuario.add(idAutor)
             numSeguidoresActual++
             userRef.update("idSiguiendo", FieldValue.arrayUnion(idAutor))
@@ -120,11 +141,9 @@ class PerfilAutorActivity : AppCompatActivity() {
 
     private fun actualizarBotonSeguir() {
         if (listaSiguiendoUsuario.contains(idAutor)) {
-            // MODO DEJAR DE SEGUIR: Color Rojo
             btnSeguir.text = "Dejar de seguir"
-            btnSeguir.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F44336")) // Rojo Material
+            btnSeguir.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F44336"))
         } else {
-            // MODO SEGUIR: Color Azul Principal
             btnSeguir.text = "Seguir"
             btnSeguir.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.primary_blue))
         }
@@ -136,15 +155,16 @@ class PerfilAutorActivity : AppCompatActivity() {
         rvHistorias.adapter = adapter
     }
 
-    private fun cargarDatosAutor(tvName: TextView, ivPhoto: ImageView) {
+    private fun cargarDatosAutor(tvName: TextView) {
         db.collection("usuarios").document(idAutor).get().addOnSuccessListener { doc ->
             val usuario = doc.toObject(Usuario::class.java)
             usuario?.let {
                 tvName.text = it.nombre
                 numSeguidoresActual = it.numSeguidor
                 tvSeguidores.text = "$numSeguidoresActual SEGUIDORES"
-                if (!it.fotoUser.isNullOrEmpty()) {
-                    ivPhoto.load(it.fotoUser) { 
+                fotoUrlAutor = it.fotoUser
+                if (!fotoUrlAutor.isNullOrEmpty()) {
+                    ivFoto.load(fotoUrlAutor) { 
                         transformations(CircleCropTransformation())
                         placeholder(android.R.drawable.ic_menu_gallery)
                     }

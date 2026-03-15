@@ -30,13 +30,13 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="?attr/colorOnSurface" />
+            app:tint="@color/black" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="BUSCAR"
-            android:textColor="?attr/colorOnSurface"
+            android:text="BÚSQUEDA"
+            android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -53,7 +53,9 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="16dp"
-        android:hint="Buscar por título o autor"
+        android:hint="Buscar..."
+        app:endIconMode="custom"
+        app:endIconDrawable="@android:drawable/ic_menu_search"
         app:layout_constraintTop_toBottomOf="@id/header_search">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -64,91 +66,84 @@
             android:textColor="?attr/colorOnSurface" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Filtro Estado -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/til_search_status"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+    <!-- PESTAÑAS (Tabs) -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout_search"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
         android:layout_marginTop="8dp"
-        android:hint="Estado"
+        app:tabIndicatorColor="?attr/colorPrimary"
+        app:tabSelectedTextColor="?attr/colorPrimary"
+        app:tabTextColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintTop_toBottomOf="@id/til_search_text">
+        <com.google.android.material.tabs.TabItem android:text="HISTORIAS" />
+        <com.google.android.material.tabs.TabItem android:text="AUTORES" />
+    </com.google.android.material.tabs.TabLayout>
 
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView
-            android:id="@+id/actv_search_status"
+    <!-- Contenedor Filtros Historias (Solo para Tab 0) -->
+    <LinearLayout
+        android:id="@+id/ll_filtros_historias"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/tab_layout_search">
+
+        <!-- Filtro Estado -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="none"
-            android:textColor="?attr/colorOnSurface"
-            tools:ignore="SpeakableTextPresentCheck" />
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="12dp"
+            android:hint="Estado">
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/actv_search_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                tools:ignore="SpeakableTextPresentCheck" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Header Géneros Colapsable -->
-    <LinearLayout
-        android:id="@+id/ll_generos_header_search"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:minHeight="48dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?attr/selectableItemBackground"
-        android:padding="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/til_search_status">
-
-        <TextView
-            android:id="@+id/tv_generos_title_search"
+        <!-- Header Géneros -->
+        <LinearLayout
+            android:id="@+id/ll_generos_header_search"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="GÉNEROS"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="16sp"
-            android:textStyle="bold" />
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GÉNEROS"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+            <ImageView
+                android:id="@+id/iv_toggle_generos_search"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="8dp"
+                android:src="@android:drawable/arrow_down_float"
+                app:tint="?attr/colorOnSurface" />
+        </LinearLayout>
 
-        <ImageView
-            android:id="@+id/iv_toggle_generos_search"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="8dp"
-            android:contentDescription="Desplegar géneros"
-            android:src="@android:drawable/arrow_down_float"
-            app:tint="?attr/colorOnSurface" />
+        <!-- Filtro Géneros -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/cg_search_genres"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="8dp" />
     </LinearLayout>
 
-    <!-- Filtro Géneros -->
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/cg_search_genres"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="8dp"
-        android:visibility="gone"
-        app:chipSpacingHorizontal="8dp"
-        app:chipSpacingVertical="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ll_generos_header_search" />
-
-    <!-- Botón de Ejecutar Búsqueda -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_ejecutar_busqueda"
-        style="@style/Widget.MaterialComponents.Button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
-        android:text="BUSCAR"
-        android:backgroundTint="?attr/colorPrimary"
-        app:cornerRadius="8dp"
-        app:layout_constraintTop_toBottomOf="@id/cg_search_genres" />
-
-    <!-- Mensaje informativo en pantalla -->
     <TextView
         android:id="@+id/tv_search_message"
         android:layout_width="0dp"
@@ -157,20 +152,27 @@
         android:gravity="center"
         android:text="Introduce algún criterio para empezar a buscar"
         android:textColor="?attr/colorOnSurfaceVariant"
-        android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_ejecutar_busqueda" />
+        app:layout_constraintTop_toBottomOf="@id/ll_filtros_historias" />
 
     <!-- Resultados -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_search_results"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_ejecutar_busqueda"
+        app:layout_constraintTop_toBottomOf="@id/ll_filtros_historias"
         tools:listitem="@layout/item_historia" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_ejecutar_busqueda"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_margin="16dp"
+        android:text="BUSCAR"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

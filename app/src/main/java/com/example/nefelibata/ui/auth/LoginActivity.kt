@@ -14,6 +14,7 @@ import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.lifecycleScope
 import com.example.nefelibata.MainActivity
 import com.example.nefelibata.R
+import com.example.nefelibata.utils.Constants
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.android.material.button.MaterialButton
@@ -37,7 +38,6 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        // PERSISTENCIA DE SESIÓN: Si ya hay un usuario, vamos directo al Main
         if (auth.currentUser != null) {
             irAMainActivity()
         }
@@ -88,8 +88,14 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            if (!isLoginMode && nombre.replace(" ", "").length < 3) {
-                Toast.makeText(this, "El nombre debe tener al menos 3 caracteres", Toast.LENGTH_SHORT).show()
+            // VALIDACIÓN: Usamos el mínimo definido en Constants
+            if (!isLoginMode && nombre.replace(" ", "").length < Constants.MIN_NAME_LENGTH) {
+                Toast.makeText(this, "El nombre debe tener al menos ${Constants.MIN_NAME_LENGTH} caracteres", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (!isLoginMode && password.length < 6) {
+                Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -178,7 +184,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun guardarUsuarioEnFirestore(userId: String, nombre: String, email: String, button: MaterialButton? = null) {
-        val nuevoUsuario = hashMapOf("idUsuario" to userId, "nombre" to nombre, "email" to email, "idFavoritas" to emptyList<String>(), "fotoUser" to "")
+        val nuevoUsuario = hashMapOf("idUsuario" to userId, "nombre" to nombre, "email" to email, "idFavoritas" to emptyList<String>(), "fotoUser" to "", "numSeguidor" to 0)
         db.collection("usuarios").document(userId).set(nuevoUsuario).addOnSuccessListener { irAMainActivity() }
     }
 

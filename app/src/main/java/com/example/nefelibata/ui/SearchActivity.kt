@@ -1,61 +1,51 @@
 package com.example.nefelibata.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.nefelibata.R
+import com.example.nefelibata.adapters.AutorAdapter
 import com.example.nefelibata.adapters.HistoriaAdapter
 import com.example.nefelibata.models.Historia
+import com.example.nefelibata.models.Usuario
 import com.example.nefelibata.utils.Constants
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
 
 class SearchActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
-    private lateinit var adapter: HistoriaAdapter
     private lateinit var rvResultados: RecyclerView
     private lateinit var etSearch: TextInputEditText
+    private lateinit var tabLayout: TabLayout
+    private lateinit var llFiltrosHistorias: LinearLayout
+    private lateinit var tvMessage: TextView
+    
+    private lateinit var adapterHistorias: HistoriaAdapter
+    private lateinit var adapterAutores: AutorAdapter
+    
+    private var listaHistoriasBase = mutableListOf<Historia>()
+    private var listaAutoresBase = mutableListOf<Usuario>()
+    
     private lateinit var actvStatus: AutoCompleteTextView
     private lateinit var cgGenres: ChipGroup
-    private lateinit var ivBack: ImageView
-    private lateinit var llGenerosHeader: LinearLayout
-    private lateinit var ivToggleGeneros: ImageView
-    private lateinit var btnBuscar: MaterialButton
-    private lateinit var tvSearchMessage: TextView
-
-    private var listaHistoriasCompleta = mutableListOf<Historia>()
-    private var listaFavoritosUsuario = mutableListOf<String>()
+    private lateinit var ivToggle: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_search)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
@@ -63,140 +53,150 @@ class SearchActivity : AppCompatActivity() {
         // Inicializar vistas
         rvResultados = findViewById(R.id.rv_search_results)
         etSearch = findViewById(R.id.et_search_text)
+        tabLayout = findViewById(R.id.tab_layout_search)
+        llFiltrosHistorias = findViewById(R.id.ll_filtros_historias)
+        tvMessage = findViewById(R.id.tv_search_message)
+        
         actvStatus = findViewById(R.id.actv_search_status)
         cgGenres = findViewById(R.id.cg_search_genres)
-        ivBack = findViewById(R.id.iv_back_search)
-        llGenerosHeader = findViewById(R.id.ll_generos_header_search)
-        ivToggleGeneros = findViewById(R.id.iv_toggle_generos_search)
-        btnBuscar = findViewById(R.id.btn_ejecutar_busqueda)
-        tvSearchMessage = findViewById(R.id.tv_search_message)
+        ivToggle = findViewById(R.id.iv_toggle_generos_search)
 
-        ivBack.setOnClickListener { finish() }
+        findViewById<ImageView>(R.id.iv_back_search).setOnClickListener { finish() }
 
-        llGenerosHeader.setOnClickListener {
-            if (cgGenres.visibility == View.VISIBLE) {
-                cgGenres.visibility = View.GONE
-                ivToggleGeneros.setImageResource(android.R.drawable.arrow_down_float)
-            } else {
-                cgGenres.visibility = View.VISIBLE
-                ivToggleGeneros.setImageResource(android.R.drawable.arrow_up_float)
-            }
-        }
+        setupAdapters()
+        setupTabs()
+        setupFiltrosHistorias()
+        cargarDatosBase()
 
-        setupRecyclerView()
-        setupFiltros()
-        obtenerFavoritos()
-
-        btnBuscar.setOnClickListener { realizarBusqueda() }
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) { ejecutarBusquedaSegunTab() }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+        
+        findViewById<Button>(R.id.btn_ejecutar_busqueda).setOnClickListener { ejecutarBusquedaSegunTab() }
     }
 
-    private fun setupRecyclerView() {
+    private fun setupAdapters() {
         rvResultados.layoutManager = LinearLayoutManager(this)
-        adapter = HistoriaAdapter(emptyList(), emptyList()) { historia ->
-            gestionarFavorito(historia)
+        adapterHistorias = HistoriaAdapter(emptyList(), emptyList()) { }
+        adapterAutores = AutorAdapter(emptyList()) { autor ->
+            val intent = Intent(this, PerfilAutorActivity::class.java)
+            intent.putExtra("idAutor", autor.idUsuario)
+            startActivity(intent)
         }
-        rvResultados.adapter = adapter
+        rvResultados.adapter = adapterHistorias
     }
 
-    private fun setupFiltros() {
+    private fun setupTabs() {
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                if (tab?.position == 0) {
+                    llFiltrosHistorias.visibility = View.VISIBLE
+                    rvResultados.adapter = adapterHistorias
+                } else {
+                    llFiltrosHistorias.visibility = View.GONE
+                    rvResultados.adapter = adapterAutores
+                }
+                ejecutarBusquedaSegunTab()
+            }
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
+        })
+    }
+
+    private fun setupFiltrosHistorias() {
         val estados = mutableListOf("Todos")
         estados.addAll(Constants.ESTADOS)
-        
         actvStatus.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estados))
         actvStatus.setText("Todos", false)
 
-        val generos = Constants.GENEROS
-        for (g in generos) {
+        for (g in Constants.GENEROS) {
             val chip = Chip(this)
             chip.text = g
             chip.isCheckable = true
             cgGenres.addView(chip)
         }
-    }
 
-    private fun obtenerFavoritos() {
-        val user = auth.currentUser
-        if (user != null) {
-            db.collection("usuarios").document(user.uid).get().addOnSuccessListener { doc ->
-                listaFavoritosUsuario = (doc.get("idFavoritas") as? List<*>)?.map { it.toString() }?.toMutableList() ?: mutableListOf()
-                cargarHistoriasBase()
-            }
-        } else {
-            cargarHistoriasBase()
+        // CORRECCIÓN: Usar el ID correcto para el header de búsqueda
+        findViewById<LinearLayout>(R.id.ll_generos_header_search).setOnClickListener {
+            cgGenres.isVisible = !cgGenres.isVisible
+            ivToggle.setImageResource(if (cgGenres.isVisible) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float)
         }
     }
 
-    private fun cargarHistoriasBase() {
-        db.collection("historias").get().addOnSuccessListener { documentos ->
-            listaHistoriasCompleta = documentos.map { doc ->
-                val h = doc.toObject(Historia::class.java)
-                h.idHistoria = doc.id
-                h
-            }.toMutableList()
-            adapter.actualizarDatos(emptyList(), listaFavoritosUsuario)
+    private fun cargarDatosBase() {
+        db.collection("historias").get().addOnSuccessListener { docs ->
+            listaHistoriasBase = docs.mapNotNull { it.toObject(Historia::class.java).apply { idHistoria = it.id } }.toMutableList()
+        }
+        db.collection("usuarios").get().addOnSuccessListener { docs ->
+            listaAutoresBase = docs.mapNotNull { it.toObject(Usuario::class.java) }.toMutableList()
         }
     }
 
-    private fun gestionarFavorito(historia: Historia) {
-        val user = auth.currentUser ?: return
-        val userRef = db.collection("usuarios").document(user.uid)
-        val historiaRef = db.collection("historias").document(historia.idHistoria)
-
-        if (listaFavoritosUsuario.contains(historia.idHistoria)) {
-            userRef.update("idFavoritas", FieldValue.arrayRemove(historia.idHistoria))
-            historiaRef.update("numFavoritos", FieldValue.increment(-1))
-            listaFavoritosUsuario.remove(historia.idHistoria)
-            historia.numFavoritos -= 1
-        } else {
-            userRef.update("idFavoritas", FieldValue.arrayUnion(historia.idHistoria))
-            historiaRef.update("numFavoritos", FieldValue.increment(1))
-            listaFavoritosUsuario.add(historia.idHistoria)
-            historia.numFavoritos += 1
-        }
-        adapter.notifyDataSetChanged()
+    private fun ejecutarBusquedaSegunTab() {
+        if (tabLayout.selectedTabPosition == 0) buscarHistorias() else buscarAutores()
     }
 
-    private fun realizarBusqueda() {
-        val texto = etSearch.text.toString().trim().lowercase()
-        val estadoSel = actvStatus.text.toString()
-        val generosMarcados = (0 until cgGenres.childCount)
-            .map { cgGenres.getChildAt(it) as Chip }
-            .filter { it.isChecked }
-            .map { it.text.toString().lowercase() }
+    private fun buscarHistorias() {
+        val query = etSearch.text.toString().trim().lowercase()
+        val status = actvStatus.text.toString()
+        val genres = (0 until cgGenres.childCount).map { cgGenres.getChildAt(it) as Chip }.filter { it.isChecked }.map { it.text.toString().lowercase() }
 
-        if (texto.isNotEmpty() && texto.length < 3) {
-            adapter.actualizarDatos(emptyList(), listaFavoritosUsuario)
-            rvResultados.visibility = View.GONE
-            tvSearchMessage.visibility = View.VISIBLE
-            tvSearchMessage.text = "Escribe al menos 3 letras para buscar por texto"
+        if (query.isNotEmpty() && query.length < Constants.MIN_SEARCH_LENGTH) {
+            limpiarResultados("Escribe al menos ${Constants.MIN_SEARCH_LENGTH} letras para buscar por texto")
             return
         }
 
-        if (texto.isEmpty() && estadoSel == "Todos" && generosMarcados.isEmpty()) {
-            adapter.actualizarDatos(emptyList(), listaFavoritosUsuario)
-            rvResultados.visibility = View.GONE
-            tvSearchMessage.visibility = View.VISIBLE
-            tvSearchMessage.text = "Introduce algún criterio para empezar a buscar"
+        if (query.isEmpty() && status == "Todos" && genres.isEmpty()) {
+            limpiarResultados("Introduce algún criterio para buscar historias")
             return
         }
 
-        val filtrada = listaHistoriasCompleta.filter { h ->
-            val cumpleTexto = texto.isEmpty() || h.titulo.lowercase().contains(texto) || h.autor.nombre.lowercase().contains(texto)
-            val cumpleEstado = estadoSel == "Todos" || h.obtenerEstadoValidado() == estadoSel
-            val hGeneros = h.genero["es"]?.map { it.lowercase() } ?: emptyList()
-            val cumpleGeneros = generosMarcados.isEmpty() || hGeneros.containsAll(generosMarcados)
-            cumpleTexto && cumpleEstado && cumpleGeneros
+        val filtrada = listaHistoriasBase.filter { h ->
+            val matchQuery = query.isEmpty() || h.titulo.lowercase().contains(query) || h.autor.nombre.lowercase().contains(query)
+            val matchStatus = status == "Todos" || h.obtenerEstadoValidado() == status
+            val hGenres = h.genero["es"]?.map { it.lowercase() } ?: emptyList()
+            val matchGenres = genres.isEmpty() || hGenres.containsAll(genres)
+            matchQuery && matchStatus && matchGenres
+        }
+        mostrarResultados(filtrada.isEmpty(), { adapterHistorias.actualizarDatos(filtrada, emptyList()) })
+    }
+
+    private fun buscarAutores() {
+        val query = etSearch.text.toString().trim().lowercase()
+        val currentUserId = auth.currentUser?.uid
+
+        if (query.isNotEmpty() && query.length < Constants.MIN_SEARCH_LENGTH) {
+            limpiarResultados("Escribe al menos ${Constants.MIN_SEARCH_LENGTH} letras para buscar autores")
+            return
         }
 
-        if (filtrada.isEmpty()) {
-            adapter.actualizarDatos(emptyList(), listaFavoritosUsuario)
-            rvResultados.visibility = View.GONE
-            tvSearchMessage.visibility = View.VISIBLE
-            tvSearchMessage.text = "No se han encontrado resultados para tu búsqueda"
+        if (query.isEmpty()) {
+            limpiarResultados("Introduce el nombre de un autor")
+            return
+        }
+
+        val filtrada = listaAutoresBase.filter { 
+            it.nombre.lowercase().contains(query) && it.idUsuario != currentUserId 
+        }
+        
+        mostrarResultados(filtrada.isEmpty(), { adapterAutores.actualizarDatos(filtrada) })
+    }
+
+    private fun limpiarResultados(msg: String) {
+        rvResultados.isVisible = false
+        tvMessage.isVisible = true
+        tvMessage.text = msg
+    }
+
+    private fun mostrarResultados(vacia: Boolean, updateAction: () -> Unit) {
+        if (vacia) {
+            limpiarResultados("No se han encontrado resultados")
         } else {
-            tvSearchMessage.visibility = View.GONE
-            rvResultados.visibility = View.VISIBLE
-            adapter.actualizarDatos(filtrada, listaFavoritosUsuario)
+            tvMessage.isVisible = false
+            rvResultados.isVisible = true
+            updateAction()
         }
     }
 }
