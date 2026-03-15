@@ -8,11 +8,11 @@
     android:background="?attr/colorSurface"
     tools:context=".ui.LeerHistoriaActivity">
 
-    <!-- Header con degradado azul -->
+    <!-- Header Azul Minimalista -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/header_leer"
         android:layout_width="match_parent"
-        android:layout_height="70dp"
+        android:layout_height="60dp"
         android:background="@drawable/degradado_header"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -20,7 +20,7 @@
             android:id="@+id/iv_back_leer"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:padding="12dp"
             android:clickable="true"
             android:focusable="true"
@@ -31,132 +31,158 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/black" />
-
+            
         <TextView
-            android:id="@+id/tv_leer_titulo_historia"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:gravity="center"
-            android:text="Título de la Historia"
+            android:text="LECTURA"
             android:textColor="@color/black"
-            android:textSize="18sp"
             android:textStyle="bold"
+            android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/iv_back_leer"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Selector de Capítulo con estilo dinámico -->
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/til_leer_selector_capitulo"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginTop="16dp"
-        android:hint="Seleccionar capítulo"
-        app:hintTextColor="?attr/colorPrimary"
-        app:boxStrokeColor="?attr/colorPrimary"
-        app:layout_constraintTop_toBottomOf="@id/header_leer">
-
-        <com.google.android.material.textfield.MaterialAutoCompleteTextView
-            android:id="@+id/actv_leer_selector_capitulo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="none"
-            android:hint="Capítulo actual"
-            android:textColor="?attr/colorOnSurface" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <!-- Cuerpo: El Folio de Lectura Adaptable -->
+    <!-- El Folio Blanco -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/mcv_leer_folio"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_margin="20dp"
+        android:layout_margin="16dp"
         app:cardCornerRadius="16dp"
         app:cardElevation="6dp"
         app:cardBackgroundColor="?attr/colorSurface"
-        app:strokeWidth="1dp"
-        app:strokeColor="?attr/colorOutline"
         app:layout_constraintBottom_toTopOf="@id/ll_leer_botones_nav"
-        app:layout_constraintTop_toBottomOf="@id/til_leer_selector_capitulo">
+        app:layout_constraintTop_toBottomOf="@id/header_leer">
 
-        <ScrollView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbarThumbVertical="?attr/colorPrimary">
+            android:orientation="vertical"
+            android:padding="16dp">
 
+            <!-- INFO HISTORIA (Título y Autor lado a lado) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="24dp">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/tv_leer_titulo_capitulo"
-                    android:layout_width="match_parent"
+                    android:id="@+id/tv_leer_titulo_historia"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="Título del Capítulo"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Título de la Historia"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="22sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <View
-                    android:layout_width="60dp"
-                    android:layout_height="3dp"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="8dp"
-                    android:background="?attr/colorPrimary" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_leer_ver_autor"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Autor"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    app:icon="@android:drawable/ic_menu_myplaces"
+                    app:iconSize="14dp"
+                    app:iconTint="?attr/colorPrimary"
+                    app:cornerRadius="20dp"
+                    app:strokeColor="?attr/colorPrimary"
+                    app:strokeWidth="1dp" />
+            </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tv_leer_contenido_capitulo"
+            <!-- Selector de Capítulo -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:hint="Capítulo">
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/actv_leer_selector_capitulo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:lineSpacingExtra="6dp"
-                    android:text="Contenido de la historia..."
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="17sp" />
+                    android:inputType="none"
+                    android:textSize="14sp"
+                    tools:ignore="SpeakableTextPresentCheck" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            </LinearLayout>
-        </ScrollView>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="12dp"
+                android:background="?attr/colorOutline" />
+
+            <!-- Contenido del Capítulo -->
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="8dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tv_leer_titulo_capitulo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/tv_leer_contenido_capitulo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:lineSpacingExtra="6dp"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </ScrollView>
+        </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Footer: Botones de Navegación -->
+    <!-- Navegación Inferior -->
     <LinearLayout
         android:id="@+id/ll_leer_botones_nav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="20dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent">
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_leer_anterior"
-            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:text="Anterior"
             app:cornerRadius="12dp" />
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_leer_siguiente"
-            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:text="Siguiente"
             app:cornerRadius="12dp" />
-
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

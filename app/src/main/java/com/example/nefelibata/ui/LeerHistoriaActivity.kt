@@ -1,6 +1,7 @@
 package com.example.nefelibata.ui
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import com.example.nefelibata.R
 import com.example.nefelibata.models.Capitulo
+import com.example.nefelibata.models.Historia
 import com.google.android.material.button.MaterialButton
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -21,6 +23,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
 
     private lateinit var db: FirebaseFirestore
     private lateinit var tvTituloHistoria: TextView
+    private lateinit var btnNombreAutor: MaterialButton 
     private lateinit var tvTituloCapitulo: TextView
     private lateinit var tvContenidoCapitulo: TextView
     private lateinit var btnAnterior: MaterialButton
@@ -31,19 +34,18 @@ class LeerHistoriaActivity : AppCompatActivity() {
     private var listaCapitulos = mutableListOf<Capitulo>()
     private var indiceActual = 0
     private lateinit var idHistoria: String
+    private var idAutorActual: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val sharedPrefs = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
-        val modeSaved = sharedPrefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        AppCompatDelegate.setDefaultNightMode(modeSaved)
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_leer_historia)
 
         db = FirebaseFirestore.getInstance()
 
         try {
+            // Sincronización con el XML: el botón se llama btn_leer_ver_autor
             tvTituloHistoria = findViewById(R.id.tv_leer_titulo_historia)
+            btnNombreAutor = findViewById(R.id.btn_leer_ver_autor) 
             tvTituloCapitulo = findViewById(R.id.tv_leer_titulo_capitulo)
             tvContenidoCapitulo = findViewById(R.id.tv_leer_contenido_capitulo)
             btnAnterior = findViewById(R.id.btn_leer_anterior)
@@ -52,22 +54,43 @@ class LeerHistoriaActivity : AppCompatActivity() {
             ivBack = findViewById(R.id.iv_back_leer)
 
             idHistoria = intent.getStringExtra("idHistoria") ?: ""
-            val tituloHistoria = intent.getStringExtra("tituloHistoria") ?: "Historia"
-            tvTituloHistoria.text = tituloHistoria
+            val tituloRecibido = intent.getStringExtra("tituloHistoria") ?: "Historia"
+            tvTituloHistoria.text = tituloRecibido
 
             ivBack.setOnClickListener { finish() }
 
             if (idHistoria.isNotEmpty()) {
+                cargarDatosHistoria()
                 cargarCapitulos()
-            } else {
-                Toast.makeText(this, "Error: Datos de historia no encontrados", Toast.LENGTH_SHORT).show()
-                finish()
+            }
+
+            btnNombreAutor.setOnClickListener {
+                idAutorActual?.let { id ->
+                    val intent = Intent(this, PerfilAutorActivity::class.java)
+                    intent.putExtra("idAutor", id)
+                    startActivity(intent)
+                }
             }
 
             configurarBotones()
         } catch (e: Exception) {
-            Log.e("LeerHistoria", "Error en onCreate: ${e.message}")
+            Log.e("LeerHistoria", "Error al inicializar vistas: ${e.message}")
             finish()
+        }
+    }
+
+    private fun cargarDatosHistoria() {
+        db.collection("historias").document(idHistoria).get().addOnSuccessListener { doc ->
+            try {
+                val historia = doc.toObject(Historia::class.java)
+                historia?.let {
+                    tvTituloHistoria.text = it.titulo
+                    btnNombreAutor.text = it.autor.nombre
+                    idAutorActual = it.autor.id
+                }
+            } catch (e: Exception) {
+                Log.e("LeerHistoria", "Error mapeando datos")
+            }
         }
     }
 
@@ -78,27 +101,15 @@ class LeerHistoriaActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { documentos ->
                 listaCapitulos = documentos.mapNotNull { doc ->
-                    try {
-                        val capitulo = doc.toObject(Capitulo::class.java)
-                        capitulo.idCapitulo = doc.id
-                        capitulo
-                    } catch (e: Exception) {
-                        null
-                    }
+                    val cap = doc.toObject(Capitulo::class.java)
+                    cap.idCapitulo = doc.id
+                    cap
                 }.toMutableList()
                 
                 if (listaCapitulos.isNotEmpty()) {
                     configurarSelector()
                     actualizarVistaCapitulo()
-                } else {
-                    tvTituloCapitulo.text = "Sin capítulos"
-                    tvContenidoCapitulo.text = "Esta historia aún no tiene contenido."
-                    btnAnterior.isEnabled = false
-                    btnSiguiente.isEnabled = false
                 }
-            }
-            .addOnFailureListener {
-                Toast.makeText(this, "Error al conectar con la base de datos", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -106,9 +117,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
         val titulos = listaCapitulos.map { 
             if (it.tituloCap.isNullOrEmpty()) "Cap. ${it.numCapitulo}" else it.tituloCap 
         }
-        val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, titulos)
-        selectorCapitulo.setAdapter(adapter)
-
+        selectorCapitulo.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, titulos))
         selectorCapitulo.setOnItemClickListener { _, _, position, _ ->
             indiceActual = position
             actualizarVistaCapitulo()
@@ -122,7 +131,6 @@ class LeerHistoriaActivity : AppCompatActivity() {
                 actualizarVistaCapitulo()
             }
         }
-
         btnSiguiente.setOnClickListener {
             if (indiceActual < listaCapitulos.size - 1) {
                 indiceActual++
@@ -133,14 +141,10 @@ class LeerHistoriaActivity : AppCompatActivity() {
 
     private fun actualizarVistaCapitulo() {
         if (listaCapitulos.isEmpty()) return
-
-        val capitulo = listaCapitulos[indiceActual]
-        // Mostrar "Cap X" si no hay título
-        tvTituloCapitulo.text = if (capitulo.tituloCap.isNullOrEmpty()) "Cap. ${capitulo.numCapitulo}" else capitulo.tituloCap
-        tvContenidoCapitulo.text = capitulo.historiaCap
-        
-        selectorCapitulo.setText(if (capitulo.tituloCap.isNullOrEmpty()) "Cap. ${capitulo.numCapitulo}" else capitulo.tituloCap, false)
-
+        val cap = listaCapitulos[indiceActual]
+        tvTituloCapitulo.text = if (cap.tituloCap.isNullOrEmpty()) "Cap. ${cap.numCapitulo}" else cap.tituloCap
+        tvContenidoCapitulo.text = cap.historiaCap
+        selectorCapitulo.setText(tvTituloCapitulo.text, false)
         btnAnterior.isEnabled = indiceActual > 0
         btnSiguiente.isEnabled = indiceActual < listaCapitulos.size - 1
     }

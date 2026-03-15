@@ -5,6 +5,8 @@ data class Usuario(
     var nombre: String = "",
     var email: String = "",
     var idFavoritas: List<String> = emptyList(),
+    var idSiguiendo: List<String> = emptyList(),
     var preferencias: Map<String, String> = emptyMap(),
-    var fotoUser: String = ""
+    var fotoUser: String = "",
+    var numSeguidor: Int = 0
 )
