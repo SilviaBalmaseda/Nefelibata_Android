@@ -23,6 +23,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 
 class PerfilAutorActivity : AppCompatActivity() {
 
@@ -38,6 +39,7 @@ class PerfilAutorActivity : AppCompatActivity() {
     private var idAutor: String = ""
     private var fotoUrlAutor: String? = null
     private var listaSiguiendoUsuario = mutableListOf<String>()
+    private var listaFavoritosUsuario = mutableListOf<String>()
     private var numSeguidoresActual = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,7 +81,6 @@ class PerfilAutorActivity : AppCompatActivity() {
         setupRecyclerView()
         obtenerDatosUsuarioLogueado()
         cargarDatosAutor(tvNombre)
-        cargarObrasAutor()
 
         btnSeguir.setOnClickListener { gestionarSeguimiento() }
     }
@@ -104,21 +105,32 @@ class PerfilAutorActivity : AppCompatActivity() {
     }
 
     private fun obtenerDatosUsuarioLogueado() {
-        val currentUser = auth.currentUser ?: return
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            cargarObrasAutor()
+            return
+        }
         db.collection("usuarios").document(currentUser.uid).get().addOnSuccessListener { doc ->
             val user = doc.toObject(Usuario::class.java)
             listaSiguiendoUsuario = user?.idSiguiendo?.toMutableList() ?: mutableListOf()
+            listaFavoritosUsuario = user?.idFavoritas?.toMutableList() ?: mutableListOf()
             actualizarBotonSeguir()
+            cargarObrasAutor()
+        }.addOnFailureListener {
+            cargarObrasAutor()
         }
     }
 
     private fun gestionarSeguimiento() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            Toast.makeText(this, "Inicia sesión", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.login_to_follow), Toast.LENGTH_SHORT).show()
             return
         }
-        if (currentUser.uid == idAutor) return
+        if (currentUser.uid == idAutor) {
+            Toast.makeText(this, getString(R.string.cannot_follow_self), Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val userRef = db.collection("usuarios").document(currentUser.uid)
         val autorRef = db.collection("usuarios").document(idAutor)
@@ -136,23 +148,51 @@ class PerfilAutorActivity : AppCompatActivity() {
         }
         
         actualizarBotonSeguir()
-        tvSeguidores.text = "$numSeguidoresActual SEGUIDORES"
+        tvSeguidores.text = getString(R.string.followers_count, numSeguidoresActual)
     }
 
     private fun actualizarBotonSeguir() {
         if (listaSiguiendoUsuario.contains(idAutor)) {
-            btnSeguir.text = "Dejar de seguir"
+            btnSeguir.text = getString(R.string.unfollow_button)
             btnSeguir.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F44336"))
         } else {
-            btnSeguir.text = "Seguir"
+            btnSeguir.text = getString(R.string.follow_button)
             btnSeguir.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.primary_blue))
         }
     }
 
     private fun setupRecyclerView() {
         rvHistorias.layoutManager = LinearLayoutManager(this)
-        adapter = HistoriaAdapter(emptyList(), emptyList()) { }
+        adapter = HistoriaAdapter(emptyList(), emptyList()) { historia ->
+            gestionarFavorito(historia)
+        }
         rvHistorias.adapter = adapter
+    }
+
+    private fun gestionarFavorito(historia: Historia) {
+        val user = auth.currentUser ?: return
+        val userRef = db.collection("usuarios").document(user.uid)
+        val historiaRef = db.collection("historias").document(historia.idHistoria)
+
+        if (listaFavoritosUsuario.contains(historia.idHistoria)) {
+            listaFavoritosUsuario.remove(historia.idHistoria)
+            val userUpdate = hashMapOf("idFavoritas" to FieldValue.arrayRemove(historia.idHistoria))
+            userRef.set(userUpdate, SetOptions.merge()).addOnSuccessListener {
+                val historiaUpdate = hashMapOf("numFavoritos" to FieldValue.increment(-1))
+                historiaRef.set(historiaUpdate, SetOptions.merge()).addOnSuccessListener {
+                    cargarObrasAutor()
+                }
+            }
+        } else {
+            listaFavoritosUsuario.add(historia.idHistoria)
+            val userUpdate = hashMapOf("idFavoritas" to FieldValue.arrayUnion(historia.idHistoria))
+            userRef.set(userUpdate, SetOptions.merge()).addOnSuccessListener {
+                val historiaUpdate = hashMapOf("numFavoritos" to FieldValue.increment(1))
+                historiaRef.set(historiaUpdate, SetOptions.merge()).addOnSuccessListener {
+                    cargarObrasAutor()
+                }
+            }
+        }
     }
 
     private fun cargarDatosAutor(tvName: TextView) {
@@ -161,7 +201,7 @@ class PerfilAutorActivity : AppCompatActivity() {
             usuario?.let {
                 tvName.text = it.nombre
                 numSeguidoresActual = it.numSeguidor
-                tvSeguidores.text = "$numSeguidoresActual SEGUIDORES"
+                tvSeguidores.text = getString(R.string.followers_count, numSeguidoresActual)
                 fotoUrlAutor = it.fotoUser
                 if (!fotoUrlAutor.isNullOrEmpty()) {
                     ivFoto.load(fotoUrlAutor) { 
@@ -180,7 +220,7 @@ class PerfilAutorActivity : AppCompatActivity() {
                 h.idHistoria = doc.id
                 h
             }
-            adapter.actualizarDatos(lista, emptyList())
+            adapter.actualizarDatos(lista, listaFavoritosUsuario)
         }
     }
 }

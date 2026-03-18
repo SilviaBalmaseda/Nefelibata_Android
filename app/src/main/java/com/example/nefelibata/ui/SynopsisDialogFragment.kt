@@ -30,13 +30,16 @@ class SynopsisDialogFragment : DialogFragment() {
         val ivClose = view.findViewById<ImageView>(R.id.iv_close_dialog)
         val btnClose = view.findViewById<MaterialButton>(R.id.btn_close_dialog)
 
-        val status = arguments?.getString("status") ?: "Desconocido"
-        val genres = arguments?.getString("genres") ?: "Sin géneros"
-        val synopsis = arguments?.getString("synopsis") ?: "No hay sinopsis disponible."
+        val status = arguments?.getString("status") ?: ""
+        val genres = arguments?.getString("genres") ?: ""
+        val synopsis = arguments?.getString("synopsis") ?: ""
 
-        tvStatus.text = Html.fromHtml("<b>Estado:</b> $status", Html.FROM_HTML_MODE_LEGACY)
-        tvGenres.text = Html.fromHtml("<b>Géneros:</b> $genres", Html.FROM_HTML_MODE_LEGACY)
-        tvSynopsis.text = Html.fromHtml("<b>Sinopsis:</b> <i>$synopsis</i>", Html.FROM_HTML_MODE_LEGACY)
+        // Usamos recursos dinámicos con HTML para los encabezados
+        tvStatus.text = Html.fromHtml(getString(R.string.dialog_status_label, status), Html.FROM_HTML_MODE_LEGACY)
+        tvGenres.text = Html.fromHtml(getString(R.string.dialog_genres_label, genres), Html.FROM_HTML_MODE_LEGACY)
+        tvSynopsis.text = Html.fromHtml(getString(R.string.dialog_synopsis_label, synopsis), Html.FROM_HTML_MODE_LEGACY)
+
+        btnClose.text = getString(R.string.dialog_close)
 
         ivClose.setOnClickListener { dismiss() }
         btnClose.setOnClickListener { dismiss() }

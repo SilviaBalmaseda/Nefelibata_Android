@@ -1,0 +1,164 @@
+<resources>
+    <string name="app_name">Nefelibata</string>
+    
+    <!-- Auth / Login -->
+    <string name="login_tab">LOG IN</string>
+    <string name="register_tab">SIGN UP</string>
+    <string name="email_hint">Email</string>
+    <string name="email_username_hint">Email or Username</string>
+    <string name="password_hint">Password</string>
+    <string name="name_hint">Name</string>
+    <string name="login_button">LOG IN</string>
+    <string name="register_button">REGISTER</string>
+    <string name="google_login">Continue with Google</string>
+    <string name="fill_all_fields">Please, fill in all fields</string>
+    <string name="password_too_short">Password must be at least 6 characters</string>
+    <string name="login_error">Incorrect username or password</string>
+    <string name="user_not_found">Username not found</string>
+    <string name="name_already_exists">That name is already in use</string>
+    <string name="auth_error">Authentication error</string>
+    <string name="welcome_msg">Welcome to Nefelibata</string>
+
+    <!-- Main Activity / Navigation -->
+    <string name="menu_search">Search</string>
+    <string name="menu_my_stories">My stories</string>
+    <string name="menu_settings">Settings</string>
+    <string name="prev_page">Previous</string>
+    <string name="next_page">Next</string>
+    <string name="coming_soon">Coming soon</string>
+    <string name="read_button">Read</string>
+    <string name="synopsis_button">Synopsis</string>
+
+    <!-- Search -->
+    <string name="search_title">SEARCH</string>
+    <string name="search_hint">Search...</string>
+    <string name="tab_stories">STORIES</string>
+    <string name="tab_authors">AUTHORS</string>
+    <string name="status_label">Status</string>
+    <string name="status_todos">All</string>
+    <string name="genres_label">GENRES</string>
+    <string name="search_button">SEARCH</string>
+    <string name="search_msg_initial">Enter some criteria to start searching</string>
+    <string name="search_msg_initial_author">Enter an author name</string>
+    <string name="search_msg_no_results">No results found</string>
+    <string name="search_msg_min_chars">Write at least %1$d letters to search</string>
+    <string name="search_msg_min_chars_authors">Write at least %1$d letters to search authors</string>
+
+    <!-- My Stories -->
+    <string name="my_stories_title">MY STORIES</string>
+    <string name="no_stories_msg">You don\'t have stories yet</string>
+    <string name="status_prefix">Status: %1$s</string>
+    <string name="edit_story_description">Edit story</string>
+    <string name="delete_story_description">Delete story</string>
+    
+    <!-- Status Mapping -->
+    <string name="status_pendiente">Pending</string>
+    <string name="status_en_pausa">On Hold</string>
+    <string name="status_terminada">Finished</string>
+    <string name="status_abandonada">Abandoned</string>
+
+    <!-- Genres -->
+    <string name="genre_accion">Action</string>
+    <string name="genre_aventura">Adventure</string>
+    <string name="genre_comedia">Comedy</string>
+    <string name="genre_drama">Drama</string>
+    <string name="genre_deportes">Sports</string>
+    <string name="genre_fantasia">Fantasy</string>
+    <string name="genre_magia">Magic</string>
+    <string name="genre_musical">Musical</string>
+    <string name="genre_psicologico">Psychological</string>
+    <string name="genre_romance">Romance</string>
+    <string name="genre_superheroes">Superheroes</string>
+    <string name="genre_terror">Horror</string>
+    <string name="genre_tragedia">Tragedy</string>
+    <string name="genre_none">None</string>
+
+    <!-- Create / Edit Story -->
+    <string name="create_story_title">CREATE STORY</string>
+    <string name="edit_story_title">EDIT STORY</string>
+    <string name="publish_story_button">PUBLISH STORY</string>
+    <string name="update_story_button">UPDATE STORY</string>
+    <string name="cover_section_label">STORY COVER</string>
+    <string name="add_cover_button">ADD COVER</string>
+    <string name="edit_cover_button">EDIT COVER</string>
+    <string name="story_data_label">STORY DETAILS</string>
+    <string name="story_title_hint">Story title *</string>
+    <string name="synopsis_hint">Synopsis</string>
+    <string name="first_chapter_label">FIRST CHAPTER</string>
+    <string name="chapter_title_hint">Chapter title</string>
+    <string name="chapter_content_hint">Chapter content *</string>
+    <string name="manage_chapters_button">MANAGE CHAPTERS</string>
+    <string name="saving_msg">SAVING...</string>
+    <string name="publishing_msg">PUBLISHING...</string>
+    <string name="success_msg">Success!</string>
+    <string name="story_published_msg">Story published!</string>
+    <string name="title_required">Title is required</string>
+    <string name="content_required">Title and Chapter content are required</string>
+    <string name="min_story_title_chars">Title must have at least %1$d characters</string>
+
+    <!-- Chapters Management -->
+    <string name="manage_chapters_title">MANAGE CHAPTERS</string>
+    <string name="new_chapter_hint">Add new chapter</string>
+    <string name="chapter_deleted">Chapter deleted</string>
+    <string name="chapter_prefix">Cap. %1$d</string>
+    <string name="no_title">No title</string>
+    <string name="edit_content_title">EDIT CONTENT</string>
+    <string name="save_changes_button">SAVE CHANGES</string>
+
+    <!-- Delete Dialogs -->
+    <string name="delete_dialog_title">WARNING</string>
+    <string name="delete_story_msg">This action will delete the story permanently. Do you want to DELETE this story?</string>
+    <string name="delete_chapter_confirm_msg">Do you want to DELETE %1$s?</string>
+    <string name="delete_chapter_simple_msg">Are you sure you want to delete chapter %1$d?</string>
+    <string name="cancel_button">CANCEL</string>
+    <string name="delete_button">DELETE</string>
+
+    <!-- Profile -->
+    <string name="profile_title">PROFILE</string>
+    <string name="followers_count">%1$d FOLLOWERS</string>
+    <string name="follow_button">Follow</string>
+    <string name="unfollow_button">Unfollow</string>
+    <string name="loading_author">Loading author...</string>
+    <string name="author_not_found">Author not found</string>
+    <string name="cannot_follow_self">You cannot follow yourself</string>
+    <string name="login_to_follow">Log in to follow authors</string>
+    <string name="author_name_placeholder">Author Name</string>
+
+    <!-- Settings -->
+    <string name="settings_title">SETTINGS</string>
+    <string name="username_label">Username</string>
+    <string name="username_placeholder">Username</string>
+    <string name="theme_label">APP THEME</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">System</string>
+    <string name="language_label">APP LANGUAGE</string>
+    <string name="lang_es">Spanish</string>
+    <string name="lang_en">English</string>
+    <string name="logout_button">LOG OUT</string>
+    <string name="back_content_description">Back</string>
+    <string name="photo_options_title">Select Cover</string>
+    <string name="profile_photo_options_title">Change profile picture</string>
+    <string name="option_camera">Camera</string>
+    <string name="option_gallery">Gallery</string>
+    <string name="option_take_photo">Take photo</string>
+    <string name="photo_ready">Photo ready</string>
+    <string name="error_loading">Error loading</string>
+    <string name="updating_profile">Updating profile...</string>
+    <string name="name_updated">Username updated</string>
+    <string name="name_in_use">That name is already in use, choose another</string>
+    <string name="min_name_chars">Minimum %1$d characters</string>
+
+    <!-- Reading & Dialogs -->
+    <string name="read_title">READING</string>
+    <string name="loading_title">Loading title...</string>
+    <string name="view_author">View Author</string>
+    <string name="no_chapters">No chapters</string>
+    <string name="no_content_msg">This story has no content yet.</string>
+    <string name="select_chapter_hint">Select chapter</string>
+    <string name="dialog_status_label"><b>Status:</b> %1$s</string>
+    <string name="dialog_genres_label"><b>Genres:</b> %1$s</string>
+    <string name="dialog_synopsis_label"><b>Synopsis:</b> <i>%1$s</i></string>
+    <string name="dialog_close">CLOSE</string>
+    <string name="synopsis_title">Story Synopsis</string>
+</resources>

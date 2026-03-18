@@ -18,13 +18,14 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:src="@android:drawable/stat_sys_warning"
+            android:contentDescription="@string/delete_dialog_title"
             app:tint="#F44336" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="ADVERTENCIA"
+            android:text="@string/delete_dialog_title"
             android:textColor="#F44336"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -34,7 +35,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="Esta acción eliminará la historia definitivamente. ¿Desea ELIMINAR está historia?"
+            android:text="@string/delete_story_msg"
             android:textAlignment="center"
             android:textColor="?attr/colorOnSurface"
             android:textSize="16sp" />
@@ -53,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="8dp"
-                android:text="CANCELAR"
+                android:text="@string/cancel_button"
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
             <com.google.android.material.button.MaterialButton
@@ -62,7 +63,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="8dp"
-                android:text="ELIMINAR"
+                android:text="@string/delete_button"
                 android:backgroundTint="#F44336"
                 android:textColor="@color/white"
                 app:cornerRadius="8dp" />

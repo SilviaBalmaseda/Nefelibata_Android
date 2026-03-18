@@ -26,7 +26,7 @@
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_revert"
-            android:contentDescription="Volver atrás"
+            android:contentDescription="@string/back_content_description"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -36,7 +36,7 @@
             android:id="@+id/tv_crear_historia_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CREAR HISTORIA"
+            android:text="@string/create_story_title"
             android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -58,7 +58,7 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Portada Previa (Variable cv_portada_previa en Kotlin) -->
+            <!-- Portada -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cv_portada_previa"
                 android:layout_width="140dp"
@@ -74,7 +74,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:contentDescription="Vista previa de la portada"
+                    android:contentDescription="@string/cover_section_label"
                     android:background="?attr/colorOutline" />
             </com.google.android.material.card.MaterialCardView>
 
@@ -83,29 +83,36 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:text="AÑADIR PORTADA"
+                android:text="@string/add_cover_button"
                 app:icon="@android:drawable/ic_menu_camera"
                 app:cornerRadius="12dp" />
 
-            <!-- Botón Gestionar Capítulos -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_gestionar_capitulos"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="16dp"
-                android:text="GESTIONAR CAPÍTULOS"
+                android:text="@string/manage_chapters_button"
                 android:visibility="gone"
                 app:icon="@android:drawable/ic_menu_sort_by_size"
                 app:cornerRadius="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/story_data_label"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface" />
 
             <!-- DATOS HISTORIA -->
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:hint="Título de la historia *">
+                android:layout_marginTop="8dp"
+                android:hint="@string/story_title_hint">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_crear_titulo"
                     android:layout_width="match_parent"
@@ -118,7 +125,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="Sinopsis">
+                android:hint="@string/synopsis_hint">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_crear_sinopsis"
                     android:layout_width="match_parent"
@@ -133,7 +140,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="Estado">
+                android:hint="@string/status_label">
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/actv_crear_estado"
                     android:layout_width="match_parent"
@@ -158,7 +165,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="GÉNEROS"
+                    android:text="@string/genres_label"
                     android:textColor="?attr/colorOnSurface"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -167,8 +174,8 @@
                     android:layout_width="24dp"
                     android:layout_height="24dp"
                     android:layout_marginStart="8dp"
-                    android:contentDescription="Desplegar géneros"
                     android:src="@android:drawable/arrow_down_float"
+                    android:contentDescription="@string/genres_label"
                     app:tint="?attr/colorOnSurface" />
             </LinearLayout>
 
@@ -199,7 +206,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
-                    android:text="PRIMER CAPÍTULO"
+                    android:text="@string/first_chapter_label"
                     android:textColor="?attr/colorPrimary"
                     android:textStyle="bold"
                     android:textSize="16sp" />
@@ -209,7 +216,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:hint="Título del capítulo">
+                    android:hint="@string/chapter_title_hint">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_crear_titulo_cap"
                         android:layout_width="match_parent"
@@ -222,7 +229,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:hint="Contenido del capítulo *">
+                    android:hint="@string/chapter_content_hint">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_crear_contenido_cap"
                         android:layout_width="match_parent"
@@ -239,7 +246,7 @@
                 android:layout_height="56dp"
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="24dp"
-                android:text="PUBLICAR HISTORIA"
+                android:text="@string/publish_story_button"
                 app:cornerRadius="12dp" />
 
         </LinearLayout>

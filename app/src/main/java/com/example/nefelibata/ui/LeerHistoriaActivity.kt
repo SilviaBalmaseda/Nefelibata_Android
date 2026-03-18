@@ -54,7 +54,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
             ivBack = findViewById(R.id.iv_back_leer)
 
             idHistoria = intent.getStringExtra("idHistoria") ?: ""
-            val tituloRecibido = intent.getStringExtra("tituloHistoria") ?: "Historia"
+            val tituloRecibido = intent.getStringExtra("tituloHistoria") ?: getString(R.string.app_name)
             tvTituloHistoria.text = tituloRecibido
 
             ivBack.setOnClickListener { finish() }
@@ -75,6 +75,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
             configurarBotones()
         } catch (e: Exception) {
             Log.e("LeerHistoria", "Error inicializando vistas: ${e.message}")
+            Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
             finish()
         }
     }
@@ -90,7 +91,10 @@ class LeerHistoriaActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Log.e("LeerHistoria", "Error mapeando historia")
+                Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
             }
+        }.addOnFailureListener {
+            Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -109,13 +113,17 @@ class LeerHistoriaActivity : AppCompatActivity() {
                 if (listaCapitulos.isNotEmpty()) {
                     configurarSelector()
                     actualizarVistaCapitulo()
+                } else {
+                    Toast.makeText(this, getString(R.string.no_chapters), Toast.LENGTH_SHORT).show()
                 }
+            }.addOnFailureListener {
+                Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun configurarSelector() {
         val titulos = listaCapitulos.map { 
-            if (it.tituloCap.isNullOrEmpty()) "Cap. ${it.numCapitulo}" else it.tituloCap 
+            if (it.tituloCap.isNullOrEmpty()) getString(R.string.chapter_prefix, it.numCapitulo) else it.tituloCap 
         }
         selectorCapitulo.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, titulos))
         selectorCapitulo.setOnItemClickListener { _, _, position, _ ->
@@ -142,7 +150,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
     private fun actualizarVistaCapitulo() {
         if (listaCapitulos.isEmpty()) return
         val cap = listaCapitulos[indiceActual]
-        tvTituloCapitulo.text = if (cap.tituloCap.isNullOrEmpty()) "Cap. ${cap.numCapitulo}" else cap.tituloCap
+        tvTituloCapitulo.text = if (cap.tituloCap.isNullOrEmpty()) getString(R.string.chapter_prefix, cap.numCapitulo) else cap.tituloCap
         tvContenidoCapitulo.text = cap.historiaCap
         selectorCapitulo.setText(tvTituloCapitulo.text, false)
         btnAnterior.isEnabled = indiceActual > 0

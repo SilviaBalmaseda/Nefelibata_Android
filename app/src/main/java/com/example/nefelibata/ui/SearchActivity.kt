@@ -106,19 +106,20 @@ class SearchActivity : AppCompatActivity() {
     }
 
     private fun setupFiltrosHistorias() {
-        val estados = mutableListOf("Todos")
-        estados.addAll(Constants.ESTADOS)
-        actvStatus.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estados))
-        actvStatus.setText("Todos", false)
+        val estadosTraducidos = mutableListOf(getString(R.string.status_todos))
+        estadosTraducidos.addAll(Constants.getEstadosTraducidos(this))
+        
+        actvStatus.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estadosTraducidos))
+        actvStatus.setText(getString(R.string.status_todos), false)
 
-        for (g in Constants.GENEROS) {
+        val generosTraducidos = Constants.getGenerosTraducidos(this)
+        for (g in generosTraducidos) {
             val chip = Chip(this)
             chip.text = g
             chip.isCheckable = true
             cgGenres.addView(chip)
         }
 
-        // CORRECCIÓN: Usar el ID correcto para el header de búsqueda
         findViewById<LinearLayout>(R.id.ll_generos_header_search).setOnClickListener {
             cgGenres.isVisible = !cgGenres.isVisible
             ivToggle.setImageResource(if (cgGenres.isVisible) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float)
@@ -140,27 +141,35 @@ class SearchActivity : AppCompatActivity() {
 
     private fun buscarHistorias() {
         val query = etSearch.text.toString().trim().lowercase()
-        val status = actvStatus.text.toString()
-        val genres = (0 until cgGenres.childCount).map { cgGenres.getChildAt(it) as Chip }.filter { it.isChecked }.map { it.text.toString().lowercase() }
+        val statusSelTraducido = actvStatus.text.toString()
+        val genres = (0 until cgGenres.childCount).map { cgGenres.getChildAt(it) as Chip }.filter { it.isChecked }.map { it.text.toString() }
 
         if (query.isNotEmpty() && query.length < Constants.MIN_SEARCH_LENGTH) {
-            limpiarResultados("Escribe al menos ${Constants.MIN_SEARCH_LENGTH} letras para buscar por texto")
+            limpiarResultados(getString(R.string.search_msg_min_chars, Constants.MIN_SEARCH_LENGTH))
             return
         }
 
-        if (query.isEmpty() && status == "Todos" && genres.isEmpty()) {
-            limpiarResultados("Introduce algún criterio para buscar historias")
+        if (query.isEmpty() && statusSelTraducido == getString(R.string.status_todos) && genres.isEmpty()) {
+            limpiarResultados(getString(R.string.search_msg_initial))
             return
         }
 
         val filtrada = listaHistoriasBase.filter { h ->
             val matchQuery = query.isEmpty() || h.titulo.lowercase().contains(query) || h.autor.nombre.lowercase().contains(query)
-            val matchStatus = status == "Todos" || h.obtenerEstadoValidado() == status
-            val hGenres = h.genero["es"]?.map { it.lowercase() } ?: emptyList()
-            val matchGenres = genres.isEmpty() || hGenres.containsAll(genres)
+            
+            val estadosTraducidos = Constants.getEstadosTraducidos(this)
+            val indiceEstado = estadosTraducidos.indexOf(statusSelTraducido)
+            val estadoDB = if (indiceEstado != -1) Constants.ESTADOS_DB[indiceEstado] else null
+            val matchStatus = statusSelTraducido == getString(R.string.status_todos) || h.obtenerEstadoValidado() == estadoDB
+            
+            val generosTraducidos = Constants.getGenerosTraducidos(this)
+            val generosDBSeleccionados = genres.map { gTrad -> Constants.GENEROS_DB[generosTraducidos.indexOf(gTrad)] }
+            val hGenerosDB = h.genero["es"] ?: emptyList()
+            val matchGenres = genres.isEmpty() || hGenerosDB.containsAll(generosDBSeleccionados)
+            
             matchQuery && matchStatus && matchGenres
         }
-        mostrarResultados(filtrada.isEmpty(), { adapterHistorias.actualizarDatos(filtrada, emptyList()) })
+        mostrarResultados(filtrada.isEmpty()) { adapterHistorias.actualizarDatos(filtrada, emptyList()) }
     }
 
     private fun buscarAutores() {
@@ -168,12 +177,12 @@ class SearchActivity : AppCompatActivity() {
         val currentUserId = auth.currentUser?.uid
 
         if (query.isNotEmpty() && query.length < Constants.MIN_SEARCH_LENGTH) {
-            limpiarResultados("Escribe al menos ${Constants.MIN_SEARCH_LENGTH} letras para buscar autores")
+            limpiarResultados(getString(R.string.search_msg_min_chars_authors, Constants.MIN_SEARCH_LENGTH))
             return
         }
 
         if (query.isEmpty()) {
-            limpiarResultados("Introduce el nombre de un autor")
+            limpiarResultados(getString(R.string.search_msg_initial_author))
             return
         }
 
@@ -181,7 +190,7 @@ class SearchActivity : AppCompatActivity() {
             it.nombre.lowercase().contains(query) && it.idUsuario != currentUserId 
         }
         
-        mostrarResultados(filtrada.isEmpty(), { adapterAutores.actualizarDatos(filtrada) })
+        mostrarResultados(filtrada.isEmpty()) { adapterAutores.actualizarDatos(filtrada) }
     }
 
     private fun limpiarResultados(msg: String) {
@@ -192,7 +201,7 @@ class SearchActivity : AppCompatActivity() {
 
     private fun mostrarResultados(vacia: Boolean, updateAction: () -> Unit) {
         if (vacia) {
-            limpiarResultados("No se han encontrado resultados")
+            limpiarResultados(getString(R.string.search_msg_no_results))
         } else {
             tvMessage.isVisible = false
             rvResultados.isVisible = true

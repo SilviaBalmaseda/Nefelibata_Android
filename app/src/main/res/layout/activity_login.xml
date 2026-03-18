@@ -19,7 +19,7 @@
             android:layout_height="100dp"
             android:layout_marginTop="16dp"
             android:src="@drawable/logo"
-            android:contentDescription="Logo de la aplicación"
+            android:contentDescription="@string/app_name"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Bienvenido a Nefelibata"
+            android:text="@string/welcome_msg"
             android:textColor="?attr/colorOnSurface"
             android:textSize="22sp"
             android:textStyle="bold"
@@ -53,14 +53,14 @@
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Iniciar Sesión" />
+                android:text="@string/login_tab" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_tab_register"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Registrarse" />
+                android:text="@string/register_tab" />
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -70,7 +70,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:hint="Nombre de usuario"
+            android:hint="@string/name_hint"
             android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@id/toggle_auth_mode"
             tools:visibility="visible">
@@ -88,7 +88,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Correo Electrónico"
+            android:hint="@string/email_username_hint"
             app:layout_constraintTop_toBottomOf="@id/til_nombre"
             app:layout_goneMarginTop="24dp">
 
@@ -105,7 +105,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="Contraseña"
+            android:hint="@string/password_hint"
             app:endIconMode="password_toggle"
             app:layout_constraintTop_toBottomOf="@id/til_email">
 
@@ -123,7 +123,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:padding="12dp"
-            android:text="INICIAR SESIÓN"
+            android:text="@string/login_button"
             app:layout_constraintTop_toBottomOf="@id/til_password" />
 
         <View
@@ -140,7 +140,7 @@
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_marginTop="24dp"
-            android:text="Continuar con Google"
+            android:text="@string/google_login"
             android:textAllCaps="false"
             android:textColor="?attr/colorOnSurface"
             app:cornerRadius="24dp"

@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="8dp"
     android:layout_marginVertical="8dp"
-    app:cardBackgroundColor="@color/white"
+    app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp">
 
@@ -20,9 +20,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Título"
+            android:text="@string/loading_title"
             android:textAlignment="center"
-            android:textColor="@color/black"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="20sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
@@ -34,7 +34,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Autor"
+            android:text="@string/view_author"
             android:textAlignment="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -45,7 +45,7 @@
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_marginTop="8dp"
-            android:background="#E0E0E0"
+            android:background="?attr/colorOutline"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tv_story_author" />
@@ -58,6 +58,7 @@
             android:layout_marginHorizontal="16dp"
             android:scaleType="fitCenter"
             android:src="@drawable/logo"
+            android:contentDescription="@string/cover_section_label"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/divider" />
@@ -77,9 +78,9 @@
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Leer"
-                android:textColor="@color/black"
-                app:strokeColor="@color/black" />
+                android:text="@string/read_button"
+                android:textColor="?attr/colorOnSurface"
+                app:strokeColor="?attr/colorOnSurface" />
 
             <com.google.android.material.button.MaterialButton
                 style="?attr/materialButtonOutlinedStyle"
@@ -87,19 +88,19 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
-                android:text="3"
-                android:textColor="@color/black"
+                android:text="0"
+                android:textColor="?attr/colorOnSurface"
                 app:icon="@android:drawable/star_off"
-                app:iconTint="@color/black"
-                app:strokeColor="@color/black" />
+                app:iconTint="?attr/colorOnSurface"
+                app:strokeColor="?attr/colorOnSurface" />
 
             <com.google.android.material.button.MaterialButton
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sinopsis"
-                android:textColor="@color/black"
-                app:strokeColor="@color/black" />
+                android:text="@string/synopsis_button"
+                android:textColor="?attr/colorOnSurface"
+                app:strokeColor="?attr/colorOnSurface" />
 
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>

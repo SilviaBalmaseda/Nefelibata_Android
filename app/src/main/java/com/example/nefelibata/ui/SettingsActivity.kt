@@ -19,12 +19,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.os.LocaleListCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.example.nefelibata.R
+import com.example.nefelibata.models.Usuario
 import com.example.nefelibata.ui.auth.LoginActivity
+import com.example.nefelibata.utils.Constants
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -85,20 +88,19 @@ class SettingsActivity : AppCompatActivity() {
         val btnLogout = findViewById<MaterialButton>(R.id.btn_logout)
         val ivBack = findViewById<ImageView>(R.id.iv_back)
         val toggleTheme = findViewById<MaterialButtonToggleGroup>(R.id.toggle_theme)
+        val toggleLang = findViewById<MaterialButtonToggleGroup>(R.id.toggle_language)
 
-        cargarDatosUsuario()
+        cargarDatosUsuario(toggleLang)
 
         ivBack.setOnClickListener { finish() }
         fabEditPhoto.setOnClickListener { mostrarOpcionesImagen() }
-        
-        // Abrir modal de imagen al pulsar la foto
         ivProfile.setOnClickListener { mostrarImagenAmpliada() }
         
         val editNameListener = View.OnClickListener { mostrarDialogoEdicion() }
         tvName.setOnClickListener(editNameListener)
         findViewById<ImageView>(R.id.iv_edit_name).setOnClickListener(editNameListener)
 
-        // Lógica de tema...
+        // Configuración tema
         when (modeSaved) {
             AppCompatDelegate.MODE_NIGHT_NO -> toggleTheme.check(R.id.btn_theme_light)
             AppCompatDelegate.MODE_NIGHT_YES -> toggleTheme.check(R.id.btn_theme_dark)
@@ -116,6 +118,14 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
+        // Configuración idioma
+        toggleLang.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                val langCode = if (checkedId == R.id.btn_lang_es) Constants.LANG_ES else Constants.LANG_EN
+                cambiarIdioma(langCode)
+            }
+        }
+
         btnLogout.setOnClickListener {
             auth.signOut()
             startActivity(Intent(this, LoginActivity::class.java).apply {
@@ -125,33 +135,67 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun cargarDatosUsuario(toggleLang: MaterialButtonToggleGroup) {
+        val user = auth.currentUser ?: return
+        db.collection("usuarios").document(user.uid).get().addOnSuccessListener { doc ->
+            if (doc.exists()) {
+                val usuario = doc.toObject(Usuario::class.java)
+                usuario?.let {
+                    tvName.text = it.nombre
+                    fotoUrlActual = it.fotoUser
+                    if (!it.fotoUser.isNullOrEmpty()) {
+                        ivProfile.load(it.fotoUser) { transformations(CircleCropTransformation()) }
+                    }
+                    
+                    // Cargar preferencia de idioma
+                    val preferencias = it.preferencias
+                    val currentLang = preferencias["leng"] ?: Constants.DEFAULT_LANG
+                    if (currentLang == Constants.LANG_ES) toggleLang.check(R.id.btn_lang_es)
+                    else toggleLang.check(R.id.btn_lang_en)
+                }
+            }
+        }
+    }
+
+    private fun cambiarIdioma(langCode: String) {
+        val androidLangCode = if (langCode == Constants.LANG_ES) "es" else "en"
+        val currentLocales = AppCompatDelegate.getApplicationLocales()
+        if (currentLocales.toLanguageTags() == androidLangCode) return
+
+        // 1. Guardar en Firestore
+        val user = auth.currentUser
+        if (user != null) {
+            val data = hashMapOf("preferencias" to hashMapOf("leng" to langCode))
+            db.collection("usuarios").document(user.uid).set(data, SetOptions.merge())
+        }
+
+        // 2. Aplicar cambio sutil
+        val appLocales: LocaleListCompat = LocaleListCompat.forLanguageTags(androidLangCode)
+        AppCompatDelegate.setApplicationLocales(appLocales)
+        
+        // Evitar el parpadeo brusco forzando una recreación suave si es necesario
+        // Aunque setApplicationLocales ya recrea la actividad, a veces un pequeño delay ayuda
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+    }
+
     private fun mostrarImagenAmpliada() {
         if (fotoUrlActual.isNullOrEmpty()) return
-
         val builder = AlertDialog.Builder(this)
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_viewer, null)
         val ivFull = dialogView.findViewById<ImageView>(R.id.iv_full_image)
-        
-        ivFull.load(fotoUrlActual) {
-            crossfade(true)
-            placeholder(android.R.drawable.ic_menu_gallery)
-        }
-
+        ivFull.load(fotoUrlActual)
         builder.setView(dialogView)
         val dialog = builder.create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        
         dialogView.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
 
     private fun mostrarOpcionesImagen() {
-        val opciones = arrayOf("Hacer foto", "Elegir de galería")
-        AlertDialog.Builder(this)
-            .setTitle("Cambiar foto de perfil")
-            .setItems(opciones) { _, which ->
-                if (which == 0) gestionarPermisosCamara() else galleryLauncher.launch("image/*")
-            }.show()
+        val opciones = arrayOf(getString(R.string.option_take_photo), getString(R.string.option_gallery))
+        AlertDialog.Builder(this).setItems(opciones) { _, which ->
+            if (which == 0) gestionarPermisosCamara() else galleryLauncher.launch("image/*")
+        }.show()
     }
 
     private fun gestionarPermisosCamara() {
@@ -168,19 +212,6 @@ class SettingsActivity : AppCompatActivity() {
         cameraLauncher.launch(cameraUri!!)
     }
 
-    private fun cargarDatosUsuario() {
-        val user = auth.currentUser ?: return
-        db.collection("usuarios").document(user.uid).get().addOnSuccessListener { doc ->
-            if (doc.exists()) {
-                tvName.text = doc.getString("nombre") ?: "Usuario"
-                fotoUrlActual = doc.getString("fotoUser")
-                if (!fotoUrlActual.isNullOrEmpty()) {
-                    ivProfile.load(fotoUrlActual) { transformations(CircleCropTransformation()) }
-                }
-            }
-        }
-    }
-
     private fun subirFotoAFirebase(uri: Uri) {
         val user = auth.currentUser ?: return
         val ref = storage.reference.child("fotos_perfil/${user.uid}.jpg")
@@ -189,7 +220,7 @@ class SettingsActivity : AppCompatActivity() {
                 fotoUrlActual = downloadUri.toString()
                 db.collection("usuarios").document(user.uid).update("fotoUser", fotoUrlActual).addOnSuccessListener {
                     ivProfile.load(fotoUrlActual) { transformations(CircleCropTransformation()) }
-                    Toast.makeText(this, "Perfil actualizado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.photo_ready), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -201,40 +232,45 @@ class SettingsActivity : AppCompatActivity() {
             "oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
             else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
         }
+        val currentMode = AppCompatDelegate.getDefaultNightMode()
+        if (currentMode == mode) return
+
         sharedPreferences.edit().putInt("theme_mode", mode).apply()
         AppCompatDelegate.setDefaultNightMode(mode)
+        
         val user = auth.currentUser
         if (user != null) {
             val data = hashMapOf("preferencias" to hashMapOf("tema" to tema))
             db.collection("usuarios").document(user.uid).set(data, SetOptions.merge())
         }
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
     private fun mostrarDialogoEdicion() {
         val builder = AlertDialog.Builder(this)
-        builder.setTitle("Cambiar nombre de usuario")
+        builder.setTitle(getString(R.string.username_label))
         val input = TextInputEditText(this).apply {
             setPadding(50, 40, 50, 40)
             setText(tvName.text)
         }
         builder.setView(input)
-        builder.setPositiveButton("Guardar") { _, _ ->
+        builder.setPositiveButton(getString(R.string.save_changes_button)) { _, _ ->
             val nuevoNombre = input.text.toString().trim()
-            if (nuevoNombre.length >= 3) {
+            if (nuevoNombre.length >= Constants.MIN_NAME_LENGTH) {
                 db.collection("usuarios").whereEqualTo("nombre", nuevoNombre).get().addOnSuccessListener { documents ->
                     if (documents.isEmpty) {
                         db.collection("usuarios").document(auth.currentUser!!.uid).update("nombre", nuevoNombre)
                             .addOnSuccessListener {
                                 tvName.text = nuevoNombre
-                                Toast.makeText(this, "Nombre actualizado", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.name_updated), Toast.LENGTH_SHORT).show()
                             }
                     } else {
-                        Toast.makeText(this, "Nombre en uso", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.name_in_use), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
-        builder.setNegativeButton("Cancelar", null)
+        builder.setNegativeButton(getString(R.string.cancel_button), null)
         builder.show()
     }
 }

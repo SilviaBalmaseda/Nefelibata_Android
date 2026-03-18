@@ -45,6 +45,7 @@ class HistoriaAdapter(
 
     override fun onBindViewHolder(holder: HistoriaViewHolder, position: Int) {
         val historia = listaHistorias[position]
+        val context = holder.itemView.context
 
         holder.tvTitulo.text = historia.titulo
         holder.tvAutor.text = historia.autor.nombre
@@ -61,19 +62,19 @@ class HistoriaAdapter(
         }
 
         holder.btnLeer.setOnClickListener {
-            val intent = Intent(holder.itemView.context, LeerHistoriaActivity::class.java).apply {
+            val intent = Intent(context, LeerHistoriaActivity::class.java).apply {
                 putExtra("idHistoria", historia.idHistoria)
                 putExtra("tituloHistoria", historia.titulo)
             }
-            holder.itemView.context.startActivity(intent)
+            context.startActivity(intent)
         }
 
         holder.btnSinopsis.setOnClickListener {
-            val activity = holder.itemView.context as? AppCompatActivity
+            val activity = context as? AppCompatActivity
             activity?.let {
                 val dialog = SynopsisDialogFragment.newInstance(
-                    status = historia.obtenerEstadoValidado(),
-                    genres = historia.obtenerGenerosValidados(),
+                    status = historia.obtenerEstadoTraducido(context),
+                    genres = historia.obtenerGenerosTraducidos(context),
                     synopsis = historia.sinopsis
                 )
                 dialog.show(it.supportFragmentManager, "SynopsisDialog")
@@ -81,7 +82,6 @@ class HistoriaAdapter(
         }
 
         // --- SOLUCIÓN DEFINITIVA AL RECICLAJE DE IMÁGENES ---
-        // 1. Limpiamos la imagen y ponemos el placeholder neutro inmediatamente
         holder.ivImagen.tag = historia.idHistoria
         holder.ivImagen.setImageResource(android.R.drawable.ic_menu_gallery)
 
@@ -89,7 +89,6 @@ class HistoriaAdapter(
             val currentId = historia.idHistoria
             val storageRef = FirebaseStorage.getInstance().getReference(historia.imagenUrl)
             storageRef.downloadUrl.addOnSuccessListener { uri ->
-                // 2. Solo cargamos la foto si la tarjeta sigue siendo para la misma historia
                 if (holder.ivImagen.tag == currentId) {
                     holder.ivImagen.load(uri) {
                         crossfade(true)

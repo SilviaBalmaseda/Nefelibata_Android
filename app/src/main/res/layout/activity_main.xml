@@ -23,7 +23,7 @@
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_marginStart="16dp"
-            android:contentDescription="Logo de la aplicación"
+            android:contentDescription="@string/app_name"
             android:src="@drawable/logo"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -47,7 +47,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
-                android:text="Nombre Usuario"
+                android:text="@string/username_placeholder"
                 android:textColor="@color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -59,7 +59,7 @@
                 android:padding="10dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:contentDescription="Menú de opciones"
+                android:contentDescription="@string/menu_settings"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_more"
                 app:tint="@color/black" />
@@ -94,7 +94,7 @@
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Anterior" />
+            android:text="@string/prev_page" />
 
         <LinearLayout
             android:id="@+id/ll_numeros_paginas"
@@ -108,7 +108,7 @@
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Siguiente" />
+            android:text="@string/next_page" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

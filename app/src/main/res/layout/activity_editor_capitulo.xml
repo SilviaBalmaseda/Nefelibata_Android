@@ -20,7 +20,11 @@
             android:layout_height="48dp"
             android:layout_marginStart="16dp"
             android:padding="12dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="@string/back_content_description"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -29,7 +33,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="EDITAR CONTENIDO"
+            android:text="@string/edit_content_title"
             android:textColor="@color/black"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -55,7 +59,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Título del capítulo">
+                android:hint="@string/chapter_title_hint">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_editor_cap_titulo"
                     android:layout_width="match_parent"
@@ -68,7 +72,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Historia / Contenido *">
+                android:hint="@string/chapter_content_hint">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_editor_cap_contenido"
                     android:layout_width="match_parent"
@@ -86,7 +90,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_margin="20dp"
-        android:text="GUARDAR CAMBIOS"
+        android:text="@string/save_changes_button"
         app:cornerRadius="12dp"
         app:layout_constraintBottom_toBottomOf="parent" />
 

@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.CircleCropTransformation
 import com.example.nefelibata.R
 import com.example.nefelibata.models.Historia
 import com.google.firebase.storage.FirebaseStorage
@@ -33,9 +34,22 @@ class MisHistoriasAdapter(
     override fun onBindViewHolder(holder: MiHistoriaViewHolder, position: Int) {
         val historia = listaHistorias[position]
         holder.tvTitulo.text = historia.titulo
-        holder.tvEstado.text = "Estado: ${historia.obtenerEstadoValidado()}"
+        
+        // --- TRADUCCIÓN DINÁMICA DE ESTADO ---
+        val context = holder.itemView.context
+        val estadoValor = historia.obtenerEstadoValidado()
+        
+        // Mapeamos el valor de la BBDD a su recurso traducido
+        val resId = when(estadoValor.lowercase()) {
+            "pendiente", "pending" -> R.string.status_pendiente
+            "en pausa", "on hold" -> R.string.status_en_pausa
+            "terminada", "finished" -> R.string.status_terminada
+            "abandonada", "abandoned" -> R.string.status_abandonada
+            else -> R.string.status_pendiente
+        }
+        
+        holder.tvEstado.text = context.getString(R.string.status_prefix, context.getString(resId))
 
-        // --- SOLUCIÓN AL ERROR DE IMÁGENES RECICLADAS Y PLACEHOLDER ---
         holder.ivPortada.setImageResource(android.R.drawable.ic_menu_gallery)
         val currentId = historia.idHistoria
         holder.ivPortada.tag = currentId
@@ -49,10 +63,6 @@ class MisHistoriasAdapter(
                         placeholder(android.R.drawable.ic_menu_gallery)
                         error(android.R.drawable.ic_menu_gallery)
                     }
-                }
-            }.addOnFailureListener {
-                if (holder.ivPortada.tag == currentId) {
-                    holder.ivPortada.setImageResource(android.R.drawable.ic_menu_gallery)
                 }
             }
         }

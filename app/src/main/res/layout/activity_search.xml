@@ -26,7 +26,7 @@
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_revert"
-            android:contentDescription="Volver atrás"
+            android:contentDescription="@string/back_content_description"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -35,7 +35,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="BÚSQUEDA"
+            android:text="@string/search_title"
             android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -53,7 +53,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="16dp"
-        android:hint="Buscar..."
+        android:hint="@string/search_hint"
         app:endIconMode="custom"
         app:endIconDrawable="@android:drawable/ic_menu_search"
         app:layout_constraintTop_toBottomOf="@id/header_search">
@@ -76,11 +76,11 @@
         app:tabSelectedTextColor="?attr/colorPrimary"
         app:tabTextColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintTop_toBottomOf="@id/til_search_text">
-        <com.google.android.material.tabs.TabItem android:text="HISTORIAS" />
-        <com.google.android.material.tabs.TabItem android:text="AUTORES" />
+        <com.google.android.material.tabs.TabItem android:text="@string/tab_stories" />
+        <com.google.android.material.tabs.TabItem android:text="@string/tab_authors" />
     </com.google.android.material.tabs.TabLayout>
 
-    <!-- Contenedor Filtros Historias (Solo para Tab 0) -->
+    <!-- Contenedor Filtros Historias -->
     <LinearLayout
         android:id="@+id/ll_filtros_historias"
         android:layout_width="match_parent"
@@ -95,7 +95,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="12dp"
-            android:hint="Estado">
+            android:hint="@string/status_label">
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/actv_search_status"
                 android:layout_width="match_parent"
@@ -119,7 +119,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="GÉNEROS"
+                android:text="@string/genres_label"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -129,6 +129,7 @@
                 android:layout_height="20dp"
                 android:layout_marginStart="8dp"
                 android:src="@android:drawable/arrow_down_float"
+                android:contentDescription="@string/genres_label"
                 app:tint="?attr/colorOnSurface" />
         </LinearLayout>
 
@@ -150,7 +151,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="32dp"
         android:gravity="center"
-        android:text="Introduce algún criterio para empezar a buscar"
+        android:text="@string/search_msg_initial"
         android:textColor="?attr/colorOnSurfaceVariant"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -172,7 +173,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_margin="16dp"
-        android:text="BUSCAR"
+        android:text="@string/search_button"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

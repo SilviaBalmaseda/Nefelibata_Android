@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
@@ -31,7 +32,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlin.math.ceil
 import com.example.nefelibata.R
-import com.example.nefelibata.ui.auth.LoginActivity
+import com.example.nefelibata.utils.Constants
+import androidx.core.os.LocaleListCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -160,6 +162,16 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             llUserLoggedIn.visibility = View.GONE
+            // Si no hay usuario, forzamos español por defecto si no hay nada configurado
+            aplicarIdiomaPorDefecto()
+        }
+    }
+
+    private fun aplicarIdiomaPorDefecto() {
+        val currentLocales = AppCompatDelegate.getApplicationLocales()
+        if (currentLocales.isEmpty) {
+            val appLocales = LocaleListCompat.forLanguageTags("es")
+            AppCompatDelegate.setApplicationLocales(appLocales)
         }
     }
 
@@ -182,7 +194,7 @@ class MainActivity : AppCompatActivity() {
             val mPopup = fieldMPopup.get(popup)
             mPopup.javaClass.getDeclaredMethod("setForceShowIcon", Boolean::class.java).invoke(mPopup, true)
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error mostrando iconos en el menú", e)
+            Log.e("MainActivity", "Error icons", e)
         }
 
         popup.setOnMenuItemClickListener { item ->
@@ -224,6 +236,8 @@ class MainActivity : AppCompatActivity() {
         db.collection("usuarios").document(user.uid).get().addOnSuccessListener { document ->
             if (document.exists()) {
                 val preferencias = document.get("preferencias") as? Map<*, *>
+                
+                // Sincronizar Tema
                 val temaRemoto = preferencias?.get("tema") as? String
                 temaRemoto?.let {
                     val modeRemoto = when (it) {
@@ -231,8 +245,23 @@ class MainActivity : AppCompatActivity() {
                         "oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
                         else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
                     }
-                    getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit().putInt("theme_mode", modeRemoto).apply()
-                    AppCompatDelegate.setDefaultNightMode(modeRemoto)
+                    val currentMode = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getInt("theme_mode", -1)
+                    if (currentMode != modeRemoto) {
+                        getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit().putInt("theme_mode", modeRemoto).apply()
+                        AppCompatDelegate.setDefaultNightMode(modeRemoto)
+                    }
+                }
+
+                // Sincronizar Idioma (Default: esp -> es)
+                val langRemoto = (preferencias?.get("leng") as? String) ?: Constants.DEFAULT_LANG
+                val androidLangCode = if (langRemoto == Constants.LANG_ES) "es" else "en"
+                
+                val currentLocales = AppCompatDelegate.getApplicationLocales()
+                if (currentLocales.toLanguageTags() != androidLangCode) {
+                    val appLocales = LocaleListCompat.forLanguageTags(androidLangCode)
+                    AppCompatDelegate.setApplicationLocales(appLocales)
+                    // Transición suave al recrear
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                 }
             }
         }

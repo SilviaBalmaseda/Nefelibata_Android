@@ -81,8 +81,12 @@ class GestionCapitulosActivity : AppCompatActivity() {
         val dialog = builder.create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        val nombreCap = if (cap.tituloCap.isNullOrEmpty()) "Cap. ${cap.numCapitulo}" else cap.tituloCap
-        dialogView.findViewById<TextView>(R.id.tv_confirm_message).text = "¿Desea ELIMINAR el $nombreCap?"
+        val nombreCap = if (cap.tituloCap.isNullOrEmpty()) {
+            getString(R.string.chapter_prefix, cap.numCapitulo)
+        } else {
+            cap.tituloCap
+        }
+        dialogView.findViewById<TextView>(R.id.tv_confirm_message).text = getString(R.string.delete_chapter_confirm_msg, nombreCap)
 
         val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btn_cancel_delete)
         val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btn_confirm_delete)
@@ -96,7 +100,7 @@ class GestionCapitulosActivity : AppCompatActivity() {
                     db.collection("historias").document(idHistoria)
                         .update("contCapitulos", FieldValue.increment(-1))
                         .addOnSuccessListener {
-                            Toast.makeText(this, "Capítulo eliminado", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, getString(R.string.chapter_deleted), Toast.LENGTH_SHORT).show()
                             cargarCapitulos()
                             dialog.dismiss()
                         }

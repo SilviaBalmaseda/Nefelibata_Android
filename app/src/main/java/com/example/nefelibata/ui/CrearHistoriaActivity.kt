@@ -57,11 +57,11 @@ class CrearHistoriaActivity : AppCompatActivity() {
     private var idHistoriaEdicion: String? = null
 
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { imageUri = it; Toast.makeText(this, "Foto seleccionada", Toast.LENGTH_SHORT).show() }
+        uri?.let { imageUri = it; Toast.makeText(this, getString(R.string.photo_ready), Toast.LENGTH_SHORT).show() }
     }
 
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) { imageUri = cameraUri; Toast.makeText(this, "Foto capturada", Toast.LENGTH_SHORT).show() }
+        if (success) { imageUri = cameraUri; Toast.makeText(this, getString(R.string.photo_ready), Toast.LENGTH_SHORT).show() }
     }
 
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -84,7 +84,7 @@ class CrearHistoriaActivity : AppCompatActivity() {
         etContenidoCap = findViewById(R.id.et_crear_contenido_cap)
         btnGuardar = findViewById(R.id.btn_guardar_historia)
         ivToggle = findViewById(R.id.iv_toggle_generos_crear)
-        capSection = findViewById<View>(R.id.ll_seccion_primer_capitulo)
+        capSection = findViewById(R.id.ll_seccion_primer_capitulo)
         ivPortadaPrevia = findViewById(R.id.iv_crear_portada_previa)
         cvPortadaPrevia = findViewById(R.id.cv_portada_previa)
         btnSubirPortada = findViewById(R.id.btn_subir_portada)
@@ -111,16 +111,17 @@ class CrearHistoriaActivity : AppCompatActivity() {
                 startActivity(intent)
             }
         } else {
-            btnSubirPortada.text = "AÑADIR PORTADA"
+            btnSubirPortada.text = getString(R.string.add_cover_button)
+            btnGuardar.text = getString(R.string.publish_story_button)
         }
 
         btnGuardar.setOnClickListener { guardarCambios() }
     }
 
     private fun configurarModoEdicion(id: String) {
-        findViewById<TextView>(R.id.tv_crear_historia_title).text = "EDITAR HISTORIA"
-        btnGuardar.text = "ACTUALIZAR HISTORIA"
-        btnSubirPortada.text = "EDITAR PORTADA" 
+        findViewById<TextView>(R.id.tv_crear_historia_title).text = getString(R.string.edit_story_title)
+        btnGuardar.text = getString(R.string.update_story_button)
+        btnSubirPortada.text = getString(R.string.edit_cover_button)
         capSection.isVisible = false
 
         db.collection("historias").document(id).get().addOnSuccessListener { doc ->
@@ -128,7 +129,11 @@ class CrearHistoriaActivity : AppCompatActivity() {
             historia?.let {
                 etTitulo.setText(it.titulo)
                 etSinopsis.setText(it.sinopsis)
-                actvEstado.setText(it.estado["es"], false)
+                
+                // Cargar estado traducido
+                val estadoValor = it.estado["es"] ?: "Pendiente"
+                val resId = Constants.ESTADOS_MAP[estadoValor] ?: R.string.status_pendiente
+                actvEstado.setText(getString(resId), false)
                 
                 if (it.imagenUrl.isNotEmpty()) {
                     cvPortadaPrevia.visibility = View.VISIBLE
@@ -138,16 +143,20 @@ class CrearHistoriaActivity : AppCompatActivity() {
                 }
 
                 val generosActuales = it.genero["es"] ?: emptyList()
+                val generosTraducidos = Constants.getGenerosTraducidos(this)
                 for (i in 0 until cgGeneros.childCount) {
                     val chip = cgGeneros.getChildAt(i) as Chip
-                    if (generosActuales.contains(chip.text.toString())) chip.isChecked = true
+                    // Comprobamos si el texto del chip (ya traducido) coincide con el nombre en la DB traducido
+                    if (generosActuales.contains(Constants.GENEROS_DB[i])) {
+                        chip.isChecked = true
+                    }
                 }
             }
         }
     }
 
     private fun mostrarDialogoFoto() {
-        val opciones = arrayOf("Cámara", "Galería")
+        val opciones = arrayOf(getString(R.string.option_camera), getString(R.string.option_gallery))
         AlertDialog.Builder(this).setItems(opciones) { _, which ->
             if (which == 0) checkCameraPermission() else galleryLauncher.launch("image/*")
         }.show()
@@ -168,9 +177,14 @@ class CrearHistoriaActivity : AppCompatActivity() {
     }
 
     private fun setupFormulario() {
-        actvEstado.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, Constants.ESTADOS))
-        actvEstado.setText(Constants.ESTADOS.first(), false)
-        for (g in Constants.GENEROS) {
+        // Selector de Estados TRADUCIDO
+        val estadosTraducidos = Constants.getEstadosTraducidos(this)
+        actvEstado.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estadosTraducidos))
+        actvEstado.setText(estadosTraducidos.first(), false)
+
+        // Chips de Géneros TRADUCIDOS
+        val generosTraducidos = Constants.getGenerosTraducidos(this)
+        for (g in generosTraducidos) {
             val chip = Chip(this)
             chip.text = g
             chip.isCheckable = true
@@ -181,14 +195,13 @@ class CrearHistoriaActivity : AppCompatActivity() {
     private fun guardarCambios() {
         val titulo = etTitulo.text.toString().trim()
         
-        // VALIDACIÓN: Usamos la constante centralizada
         if (titulo.length < Constants.MIN_STORY_TITLE_LENGTH) {
-            Toast.makeText(this, "El título debe tener al menos ${Constants.MIN_STORY_TITLE_LENGTH} caracteres", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.min_story_title_chars, Constants.MIN_STORY_TITLE_LENGTH), Toast.LENGTH_SHORT).show()
             return
         }
 
         btnGuardar.isEnabled = false
-        btnGuardar.text = "GUARDANDO..."
+        btnGuardar.text = getString(R.string.saving_msg)
 
         lifecycleScope.launch {
             try {
@@ -200,16 +213,26 @@ class CrearHistoriaActivity : AppCompatActivity() {
                     downloadUrl = ref.path
                 }
 
+                // Obtener géneros seleccionados (Guardamos el nombre original de la BBDD)
                 val generosSel = mutableListOf<String>()
+                val generosTraducidos = Constants.getGenerosTraducidos(this@CrearHistoriaActivity)
                 for (i in 0 until cgGeneros.childCount) {
                     val chip = cgGeneros.getChildAt(i) as Chip
-                    if (chip.isChecked) generosSel.add(chip.text.toString())
+                    if (chip.isChecked) {
+                        generosSel.add(Constants.GENEROS_DB[i])
+                    }
                 }
+
+                // Obtener estado seleccionado (Mapeamos de la traducción al valor DB)
+                val estadoSelTraducido = actvEstado.text.toString()
+                val estadosTraducidos = Constants.getEstadosTraducidos(this@CrearHistoriaActivity)
+                val indiceEstado = estadosTraducidos.indexOf(estadoSelTraducido)
+                val estadoDB = if (indiceEstado != -1) Constants.ESTADOS_DB[indiceEstado] else "Pendiente"
 
                 val data = mutableMapOf<String, Any>(
                     "titulo" to titulo,
                     "sinopsis" to etSinopsis.text.toString().trim(),
-                    "estado" to mapOf("es" to actvEstado.text.toString()),
+                    "estado" to mapOf("es" to estadoDB),
                     "genero" to mapOf("es" to if(generosSel.isEmpty()) listOf("Ninguno") else generosSel),
                     "fechaModificacionH" to Timestamp.now()
                 )
@@ -234,16 +257,17 @@ class CrearHistoriaActivity : AppCompatActivity() {
                         "fechaCreacionC" to Timestamp.now(),
                         "fechaModificacionC" to Timestamp.now()
                     )).await()
+                    Toast.makeText(this@CrearHistoriaActivity, getString(R.string.story_published_msg), Toast.LENGTH_SHORT).show()
                 } else {
                     db.collection("historias").document(idHistoriaEdicion!!).update(data).await()
+                    Toast.makeText(this@CrearHistoriaActivity, getString(R.string.success_msg), Toast.LENGTH_SHORT).show()
                 }
 
-                Toast.makeText(this@CrearHistoriaActivity, "¡Éxito!", Toast.LENGTH_SHORT).show()
                 finish()
             } catch (e: Exception) {
-                Toast.makeText(this@CrearHistoriaActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@CrearHistoriaActivity, "${getString(R.string.error_loading)}: ${e.message}", Toast.LENGTH_LONG).show()
                 btnGuardar.isEnabled = true
-                btnGuardar.text = "GUARDAR"
+                btnGuardar.text = getString(R.string.update_story_button)
             }
         }
     }

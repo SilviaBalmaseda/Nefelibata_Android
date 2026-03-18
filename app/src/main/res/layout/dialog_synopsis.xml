@@ -22,7 +22,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sinopsis de la historia"
+                android:text="@string/synopsis_title"
                 android:textColor="#212121"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -38,7 +38,7 @@
                 android:layout_marginEnd="8dp"
                 android:padding="8dp"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
-                android:contentDescription="Cerrar diálogo"
+                android:contentDescription="@string/dialog_close"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -56,7 +56,6 @@
                 android:id="@+id/tv_dialog_status"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Estado: Pendiente"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp" />
 
@@ -65,7 +64,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Géneros: Acción, Aventura..."
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="14sp" />
 
@@ -80,7 +78,6 @@
                 android:id="@+id/tv_dialog_synopsis"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Sinopsis: Prueba Sinopsis"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="15sp"
                 android:textStyle="italic" />
@@ -93,7 +90,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="24dp"
                 android:backgroundTint="#1565C0"
-                android:text="Cerrar"
+                android:text="@string/dialog_close"
                 android:textColor="@color/white"
                 app:cornerRadius="24dp" />
 

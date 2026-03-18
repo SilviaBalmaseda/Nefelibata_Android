@@ -65,14 +65,14 @@ class LoginActivity : AppCompatActivity() {
                     R.id.btn_tab_login -> {
                         isLoginMode = true
                         tilNombre.visibility = View.GONE
-                        etEmail.hint = "Email o Nombre de usuario"
-                        btnAction.text = "INICIAR SESIÓN"
+                        etEmail.hint = getString(R.string.email_username_hint)
+                        btnAction.text = getString(R.string.login_button)
                     }
                     R.id.btn_tab_register -> {
                         isLoginMode = false
                         tilNombre.visibility = View.VISIBLE
-                        etEmail.hint = "Email"
-                        btnAction.text = "REGISTRARSE"
+                        etEmail.hint = getString(R.string.email_hint)
+                        btnAction.text = getString(R.string.register_button)
                     }
                 }
             }
@@ -84,18 +84,17 @@ class LoginActivity : AppCompatActivity() {
             val nombre = etNombre.text.toString().trim()
 
             if (inputIdentificador.isEmpty() || password.isEmpty() || (!isLoginMode && nombre.isEmpty())) {
-                Toast.makeText(this, "Por favor, rellena todos los campos", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.fill_all_fields), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // VALIDACIÓN: Usamos el mínimo definido en Constants
             if (!isLoginMode && nombre.replace(" ", "").length < Constants.MIN_NAME_LENGTH) {
-                Toast.makeText(this, "El nombre debe tener al menos ${Constants.MIN_NAME_LENGTH} caracteres", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.min_name_chars, Constants.MIN_NAME_LENGTH), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (!isLoginMode && password.length < 6) {
-                Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.password_too_short), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -112,12 +111,12 @@ class LoginActivity : AppCompatActivity() {
                                 loginConEmail(emailEncontrado, password, btnAction)
                             } else {
                                 btnAction.isEnabled = true
-                                Toast.makeText(this, "Nombre de usuario no encontrado", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, getString(R.string.user_not_found), Toast.LENGTH_SHORT).show()
                             }
                         }
                         .addOnFailureListener {
                             btnAction.isEnabled = true
-                            Toast.makeText(this, "Error al verificar usuario", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, getString(R.string.auth_error), Toast.LENGTH_SHORT).show()
                         }
                 }
             } else {
@@ -130,12 +129,12 @@ class LoginActivity : AppCompatActivity() {
                                     guardarUsuarioEnFirestore(userId, nombre, inputIdentificador, btnAction)
                                 } else {
                                     btnAction.isEnabled = true
-                                    Toast.makeText(this, "Error: ${task.exception?.localizedMessage}", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(this, task.exception?.localizedMessage, Toast.LENGTH_LONG).show()
                                 }
                             }
                     } else {
                         btnAction.isEnabled = true
-                        Toast.makeText(this, "Ese nombre ya está en uso", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.name_already_exists), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -148,7 +147,7 @@ class LoginActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
             button.isEnabled = true
             if (task.isSuccessful) irAMainActivity()
-            else Toast.makeText(this, "Contraseña o usuario incorrectos", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(this, getString(R.string.login_error), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -179,7 +178,7 @@ class LoginActivity : AppCompatActivity() {
                         }
                     }
                 }
-            } catch (e: Exception) { Log.e("LoginActivity", "Error Google: ${e.message}") }
+            } catch (e: Exception) { Log.e("LoginActivity", "Error Google") }
         }
     }
 

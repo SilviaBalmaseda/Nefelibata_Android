@@ -3,13 +3,13 @@
     <item
         android:id="@+id/menu_buscar"
         android:icon="@drawable/ic_search"
-        android:title="Buscar" />
+        android:title="@string/menu_search" />
     <item
         android:id="@+id/menu_mis_historias"
         android:icon="@drawable/ic_book"
-        android:title="Mis historias" />
+        android:title="@string/menu_my_stories" />
     <item
         android:id="@+id/menu_ajustes"
         android:icon="@drawable/ic_settings"
-        android:title="Ajustes" />
+        android:title="@string/menu_settings" />
 </menu>

@@ -54,7 +54,7 @@ class EditorCapituloActivity : AppCompatActivity() {
         val contenido = etContenido.text.toString().trim()
 
         if (contenido.isEmpty()) {
-            Toast.makeText(this, "El contenido es obligatorio", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.content_required), Toast.LENGTH_SHORT).show()
             return
         }
 

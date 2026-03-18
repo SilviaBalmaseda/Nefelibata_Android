@@ -79,6 +79,7 @@ class MisHistoriasActivity : AppCompatActivity() {
 
     private fun cargarMisHistorias() {
         val userId = auth.currentUser?.uid ?: return
+        val tvEmpty = findViewById<TextView>(R.id.tv_empty_mis_historias)
 
         db.collection("historias")
             .whereEqualTo("autor.id", userId)
@@ -89,7 +90,15 @@ class MisHistoriasActivity : AppCompatActivity() {
                     h.idHistoria = doc.id
                     h
                 }
-                adapter.actualizarDatos(lista)
+                
+                if (lista.isEmpty()) {
+                    tvEmpty.visibility = View.VISIBLE
+                    rvMisHistorias.visibility = View.GONE
+                } else {
+                    tvEmpty.visibility = View.GONE
+                    rvMisHistorias.visibility = View.VISIBLE
+                    adapter.actualizarDatos(lista)
+                }
             }
     }
 
@@ -103,6 +112,9 @@ class MisHistoriasActivity : AppCompatActivity() {
 
         val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btn_cancel_delete)
         val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btn_confirm_delete)
+        val tvMessage = dialogView.findViewById<TextView>(R.id.tv_confirm_message)
+
+        tvMessage.text = getString(R.string.delete_story_msg)
 
         btnCancel.setOnClickListener {
             dialog.dismiss()
@@ -129,7 +141,7 @@ class MisHistoriasActivity : AppCompatActivity() {
                             batch.update(doc.reference, "idFavoritas", FieldValue.arrayRemove(idHistoria))
                         }
                         batch.commit().addOnCompleteListener {
-                            Toast.makeText(this, "Historia eliminada", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, getString(R.string.success_msg), Toast.LENGTH_SHORT).show()
                             cargarMisHistorias()
                         }
                     }
