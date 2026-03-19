@@ -38,7 +38,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import java.io.File
-import java.util.UUID
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -169,12 +168,14 @@ class SettingsActivity : AppCompatActivity() {
             db.collection("usuarios").document(user.uid).set(data, SetOptions.merge())
         }
 
-        // 2. Aplicar cambio sutil
+        // 2. Aplicar cambio con transición suave
         val appLocales: LocaleListCompat = LocaleListCompat.forLanguageTags(androidLangCode)
         AppCompatDelegate.setApplicationLocales(appLocales)
         
-        // Evitar el parpadeo brusco forzando una recreación suave si es necesario
-        // Aunque setApplicationLocales ya recrea la actividad, a veces un pequeño delay ayuda
+        // Recrear la actividad con transición
+        val intent = Intent(this, SettingsActivity::class.java)
+        startActivity(intent)
+        finish()
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
@@ -243,6 +244,11 @@ class SettingsActivity : AppCompatActivity() {
             val data = hashMapOf("preferencias" to hashMapOf("tema" to tema))
             db.collection("usuarios").document(user.uid).set(data, SetOptions.merge())
         }
+        
+        // Reiniciar actividad con transición suave
+        val intent = Intent(this, SettingsActivity::class.java)
+        startActivity(intent)
+        finish()
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 

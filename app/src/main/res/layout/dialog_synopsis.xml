@@ -17,13 +17,13 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:background="@drawable/header_gradient">
+            android:background="@drawable/degradado_header">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/synopsis_title"
-                android:textColor="#212121"
+                android:textColor="@color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -33,16 +33,16 @@
 
             <ImageView
                 android:id="@+id/iv_close_dialog"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_marginEnd="8dp"
-                android:padding="8dp"
+                android:padding="12dp"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
                 android:contentDescription="@string/dialog_close"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:tint="#757575" />
+                app:tint="@color/black" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <!-- BODY -->
@@ -52,47 +52,83 @@
             android:orientation="vertical"
             android:padding="24dp">
 
-            <TextView
-                android:id="@+id/tv_dialog_status"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dialog_label_status"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp" />
+                <TextView
+                    android:id="@+id/tv_dialog_status_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp"
+                    tools:text="Pendiente" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dialog_label_genres"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="16sp" />
+                <TextView
+                    android:id="@+id/tv_dialog_genres_value"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp"
+                    tools:text="Acción, Aventura" />
+            </LinearLayout>
+
+            <!-- Línea divisoria (HR) -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="16dp"
+                android:background="?attr/colorOutlineVariant" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/dialog_label_synopsis"
+                android:textStyle="bold"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="16sp" />
 
             <TextView
-                android:id="@+id/tv_dialog_genres"
+                android:id="@+id/tv_dialog_synopsis_value"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="14sp" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                android:background="?attr/colorOutline" />
-
-            <TextView
-                android:id="@+id/tv_dialog_synopsis"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:textColor="?attr/colorOnSurface"
                 android:textSize="15sp"
-                android:textStyle="italic" />
+                android:lineSpacingExtra="4dp"
+                tools:text="Esta es la sinopsis de la historia..." />
 
             <!-- FOOTER -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_close_dialog"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="24dp"
-                android:backgroundTint="#1565C0"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="32dp"
                 android:text="@string/dialog_close"
-                android:textColor="@color/white"
-                app:cornerRadius="24dp" />
+                app:cornerRadius="12dp" />
 
         </LinearLayout>
     </LinearLayout>

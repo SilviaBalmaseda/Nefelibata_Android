@@ -3,7 +3,6 @@ package com.example.nefelibata.ui
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,22 +23,15 @@ class SynopsisDialogFragment : DialogFragment() {
 
         dialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-        val tvStatus = view.findViewById<TextView>(R.id.tv_dialog_status)
-        val tvGenres = view.findViewById<TextView>(R.id.tv_dialog_genres)
-        val tvSynopsis = view.findViewById<TextView>(R.id.tv_dialog_synopsis)
+        val tvStatusValue = view.findViewById<TextView>(R.id.tv_dialog_status_value)
+        val tvGenresValue = view.findViewById<TextView>(R.id.tv_dialog_genres_value)
+        val tvSynopsisValue = view.findViewById<TextView>(R.id.tv_dialog_synopsis_value)
         val ivClose = view.findViewById<ImageView>(R.id.iv_close_dialog)
         val btnClose = view.findViewById<MaterialButton>(R.id.btn_close_dialog)
 
-        val status = arguments?.getString("status") ?: ""
-        val genres = arguments?.getString("genres") ?: ""
-        val synopsis = arguments?.getString("synopsis") ?: ""
-
-        // Usamos recursos dinámicos con HTML para los encabezados
-        tvStatus.text = Html.fromHtml(getString(R.string.dialog_status_label, status), Html.FROM_HTML_MODE_LEGACY)
-        tvGenres.text = Html.fromHtml(getString(R.string.dialog_genres_label, genres), Html.FROM_HTML_MODE_LEGACY)
-        tvSynopsis.text = Html.fromHtml(getString(R.string.dialog_synopsis_label, synopsis), Html.FROM_HTML_MODE_LEGACY)
-
-        btnClose.text = getString(R.string.dialog_close)
+        tvStatusValue.text = arguments?.getString("status") ?: ""
+        tvGenresValue.text = arguments?.getString("genres") ?: ""
+        tvSynopsisValue.text = arguments?.getString("synopsis") ?: ""
 
         ivClose.setOnClickListener { dismiss() }
         btnClose.setOnClickListener { dismiss() }

@@ -156,9 +156,9 @@
     <string name="no_chapters">No chapters</string>
     <string name="no_content_msg">This story has no content yet.</string>
     <string name="select_chapter_hint">Select chapter</string>
-    <string name="dialog_status_label"><b>Status:</b> %1$s</string>
-    <string name="dialog_genres_label"><b>Genres:</b> %1$s</string>
-    <string name="dialog_synopsis_label"><b>Synopsis:</b> <i>%1$s</i></string>
+    <string name="dialog_label_status">Status:</string>
+    <string name="dialog_label_genres">Genres:</string>
+    <string name="dialog_label_synopsis">Synopsis:</string>
     <string name="dialog_close">CLOSE</string>
     <string name="synopsis_title">Story Synopsis</string>
 </resources>

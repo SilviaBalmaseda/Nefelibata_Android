@@ -1,17 +1,14 @@
 package com.example.nefelibata.ui
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import com.example.nefelibata.R
 import com.example.nefelibata.models.Capitulo
 import com.example.nefelibata.models.Historia
@@ -19,6 +16,10 @@ import com.google.android.material.button.MaterialButton
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
+/**
+ * Actividad encargada de la lectura de capítulos de una historia.
+ * Refactorizada para maximizar la legibilidad y el uso de Kotlin idiomático.
+ */
 class LeerHistoriaActivity : AppCompatActivity() {
 
     private lateinit var db: FirebaseFirestore
@@ -31,7 +32,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
     private lateinit var selectorCapitulo: AutoCompleteTextView
     private lateinit var ivBack: ImageView
 
-    private var listaCapitulos = mutableListOf<Capitulo>()
+    private val listaCapitulos = mutableListOf<Capitulo>()
     private var indiceActual = 0
     private lateinit var idHistoria: String
     private var idAutorActual: String? = null
@@ -41,74 +42,86 @@ class LeerHistoriaActivity : AppCompatActivity() {
         setContentView(R.layout.activity_leer_historia)
 
         db = FirebaseFirestore.getInstance()
+        
+        initViews()
+        setupListeners()
+        loadInitialData()
+    }
 
-        try {
-            // IDs vinculados al nuevo diseño dentro del folio blanco
-            tvTituloHistoria = findViewById(R.id.tv_leer_titulo_historia)
-            btnNombreAutor = findViewById(R.id.btn_leer_ver_autor) 
-            tvTituloCapitulo = findViewById(R.id.tv_leer_titulo_capitulo)
-            tvContenidoCapitulo = findViewById(R.id.tv_leer_contenido_capitulo)
-            btnAnterior = findViewById(R.id.btn_leer_anterior)
-            btnSiguiente = findViewById(R.id.btn_leer_siguiente)
-            selectorCapitulo = findViewById(R.id.actv_leer_selector_capitulo)
-            ivBack = findViewById(R.id.iv_back_leer)
+    /**
+     * Inicializa las referencias a los componentes de la interfaz.
+     */
+    private fun initViews() {
+        tvTituloHistoria = findViewById(R.id.tv_leer_titulo_historia)
+        btnNombreAutor = findViewById(R.id.btn_leer_ver_autor) 
+        tvTituloCapitulo = findViewById(R.id.tv_leer_titulo_capitulo)
+        tvContenidoCapitulo = findViewById(R.id.tv_leer_contenido_capitulo)
+        btnAnterior = findViewById(R.id.btn_leer_anterior)
+        btnSiguiente = findViewById(R.id.btn_leer_siguiente)
+        selectorCapitulo = findViewById(R.id.actv_leer_selector_capitulo)
+        ivBack = findViewById(R.id.iv_back_leer)
+    }
 
-            idHistoria = intent.getStringExtra("idHistoria") ?: ""
-            val tituloRecibido = intent.getStringExtra("tituloHistoria") ?: getString(R.string.app_name)
-            tvTituloHistoria.text = tituloRecibido
+    /**
+     * Configura los listeners de clics para la navegación y acciones de usuario.
+     */
+    private fun setupListeners() {
+        ivBack.setOnClickListener { finish() }
 
-            ivBack.setOnClickListener { finish() }
-
-            if (idHistoria.isNotEmpty()) {
-                cargarDatosHistoria()
-                cargarCapitulos()
-            }
-
-            btnNombreAutor.setOnClickListener {
-                idAutorActual?.let { id ->
-                    val intent = Intent(this, PerfilAutorActivity::class.java)
-                    intent.putExtra("idAutor", id)
-                    startActivity(intent)
+        btnNombreAutor.setOnClickListener {
+            idAutorActual?.let { id ->
+                val intent = Intent(this, PerfilAutorActivity::class.java).apply {
+                    putExtra("idAutor", id)
                 }
+                startActivity(intent)
             }
+        }
 
-            configurarBotones()
-        } catch (e: Exception) {
-            Log.e("LeerHistoria", "Error inicializando vistas: ${e.message}")
-            Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
-            finish()
+        btnAnterior.setOnClickListener { navigateChapter(-1) }
+        btnSiguiente.setOnClickListener { navigateChapter(1) }
+    }
+
+    /**
+     * Carga los datos iniciales y dispara las peticiones a Firestore.
+     */
+    private fun loadInitialData() {
+        idHistoria = intent.getStringExtra("idHistoria") ?: ""
+        tvTituloHistoria.text = intent.getStringExtra("tituloHistoria") ?: getString(R.string.app_name)
+
+        if (idHistoria.isNotEmpty()) {
+            cargarDatosHistoria()
+            cargarCapitulos()
         }
     }
 
+    /**
+     * Recupera los detalles de la historia (título y autor) desde Firestore.
+     */
     private fun cargarDatosHistoria() {
-        db.collection("historias").document(idHistoria).get().addOnSuccessListener { doc ->
-            try {
-                val historia = doc.toObject(Historia::class.java)
-                historia?.let {
-                    tvTituloHistoria.text = it.titulo
-                    btnNombreAutor.text = it.autor.nombre
-                    idAutorActual = it.autor.id
+        db.collection("historias").document(idHistoria).get()
+            .addOnSuccessListener { doc ->
+                doc.toObject(Historia::class.java)?.let { historia ->
+                    tvTituloHistoria.text = historia.titulo
+                    btnNombreAutor.text = historia.autor.nombre
+                    idAutorActual = historia.autor.id
                 }
-            } catch (e: Exception) {
-                Log.e("LeerHistoria", "Error mapeando historia")
-                Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
             }
-        }.addOnFailureListener {
-            Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
-        }
+            .addOnFailureListener { showError() }
     }
 
+    /**
+     * Recupera y ordena la lista de capítulos asociados a la historia.
+     */
     private fun cargarCapitulos() {
         db.collection("historias").document(idHistoria)
             .collection("capitulos")
             .orderBy("numCapitulo", Query.Direction.ASCENDING)
             .get()
             .addOnSuccessListener { documentos ->
-                listaCapitulos = documentos.mapNotNull { doc ->
-                    val cap = doc.toObject(Capitulo::class.java)
-                    cap.idCapitulo = doc.id
-                    cap
-                }.toMutableList()
+                listaCapitulos.clear()
+                listaCapitulos.addAll(documentos.mapNotNull { doc ->
+                    doc.toObject(Capitulo::class.java).apply { idCapitulo = doc.id }
+                })
                 
                 if (listaCapitulos.isNotEmpty()) {
                     configurarSelector()
@@ -116,44 +129,58 @@ class LeerHistoriaActivity : AppCompatActivity() {
                 } else {
                     Toast.makeText(this, getString(R.string.no_chapters), Toast.LENGTH_SHORT).show()
                 }
-            }.addOnFailureListener {
-                Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
             }
+            .addOnFailureListener { showError() }
     }
 
+    /**
+     * Configura el adaptador y evento de selección para el dropdown de capítulos.
+     */
     private fun configurarSelector() {
         val titulos = listaCapitulos.map { 
-            if (it.tituloCap.isNullOrEmpty()) getString(R.string.chapter_prefix, it.numCapitulo) else it.tituloCap 
+            it.tituloCap.takeUnless { t -> t.isNullOrEmpty() } 
+                ?: getString(R.string.chapter_prefix, it.numCapitulo)
         }
-        selectorCapitulo.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, titulos))
-        selectorCapitulo.setOnItemClickListener { _, _, position, _ ->
-            indiceActual = position
+        
+        selectorCapitulo.apply {
+            setAdapter(ArrayAdapter(this@LeerHistoriaActivity, android.R.layout.simple_dropdown_item_1line, titulos))
+            setOnItemClickListener { _, _, position, _ ->
+                indiceActual = position
+                actualizarVistaCapitulo()
+            }
+        }
+    }
+
+    /**
+     * Navega al capítulo anterior o siguiente según el delta proporcionado.
+     */
+    private fun navigateChapter(delta: Int) {
+        val nuevoIndice = indiceActual + delta
+        if (nuevoIndice in listaCapitulos.indices) {
+            indiceActual = nuevoIndice
             actualizarVistaCapitulo()
         }
     }
 
-    private fun configurarBotones() {
-        btnAnterior.setOnClickListener {
-            if (indiceActual > 0) {
-                indiceActual--
-                actualizarVistaCapitulo()
-            }
-        }
-        btnSiguiente.setOnClickListener {
-            if (indiceActual < listaCapitulos.size - 1) {
-                indiceActual++
-                actualizarVistaCapitulo()
-            }
-        }
-    }
-
+    /**
+     * Refresca la interfaz de usuario con la información del capítulo actual.
+     */
     private fun actualizarVistaCapitulo() {
         if (listaCapitulos.isEmpty()) return
+        
         val cap = listaCapitulos[indiceActual]
-        tvTituloCapitulo.text = if (cap.tituloCap.isNullOrEmpty()) getString(R.string.chapter_prefix, cap.numCapitulo) else cap.tituloCap
+        val displayTitle = cap.tituloCap.takeUnless { it.isNullOrEmpty() } 
+            ?: getString(R.string.chapter_prefix, cap.numCapitulo)
+
+        tvTituloCapitulo.text = displayTitle
         tvContenidoCapitulo.text = cap.historiaCap
-        selectorCapitulo.setText(tvTituloCapitulo.text, false)
+        selectorCapitulo.setText(displayTitle, false)
+        
         btnAnterior.isEnabled = indiceActual > 0
         btnSiguiente.isEnabled = indiceActual < listaCapitulos.size - 1
+    }
+
+    private fun showError() {
+        Toast.makeText(this, getString(R.string.error_loading), Toast.LENGTH_SHORT).show()
     }
 }

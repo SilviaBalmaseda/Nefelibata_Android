@@ -156,9 +156,9 @@
     <string name="no_chapters">Sin capítulos</string>
     <string name="no_content_msg">Esta historia aún no tiene contenido.</string>
     <string name="select_chapter_hint">Seleccionar capítulo</string>
-    <string name="dialog_status_label"><b>Estado:</b> %1$s</string>
-    <string name="dialog_genres_label"><b>Géneros:</b> %1$s</string>
-    <string name="dialog_synopsis_label"><b>Sinopsis:</b> <i>%1$s</i></string>
+    <string name="dialog_label_status">Estado:</string>
+    <string name="dialog_label_genres">Géneros:</string>
+    <string name="dialog_label_synopsis">Sinopsis:</string>
     <string name="dialog_close">CERRAR</string>
     <string name="synopsis_title">Sinopsis de la historia</string>
 </resources>
