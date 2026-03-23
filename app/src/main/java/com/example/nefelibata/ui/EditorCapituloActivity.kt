@@ -16,6 +16,7 @@ class EditorCapituloActivity : AppCompatActivity() {
     private lateinit var db: FirebaseFirestore
     private lateinit var etTitulo: EditText
     private lateinit var etContenido: EditText
+    private lateinit var btnGuardar: MaterialButton
     private lateinit var idHistoria: String
     private var idCapitulo: String? = null
 
@@ -29,7 +30,7 @@ class EditorCapituloActivity : AppCompatActivity() {
 
         etTitulo = findViewById(R.id.et_editor_cap_titulo)
         etContenido = findViewById(R.id.et_editor_cap_contenido)
-        val btnGuardar = findViewById<MaterialButton>(R.id.btn_editor_cap_guardar)
+        btnGuardar = findViewById(R.id.btn_editor_cap_guardar)
 
         findViewById<ImageView>(R.id.iv_back_editor).setOnClickListener { finish() }
 
@@ -58,6 +59,9 @@ class EditorCapituloActivity : AppCompatActivity() {
             return
         }
 
+        // Deshabilitar botón para evitar duplicados
+        btnGuardar.isEnabled = false
+
         if (idCapitulo == null) {
             // MODO CREACIÓN: Usar últimoNumCap + 1
             db.collection("historias").document(idHistoria).get().addOnSuccessListener { docH ->
@@ -80,8 +84,19 @@ class EditorCapituloActivity : AppCompatActivity() {
                         "contCapitulos", FieldValue.increment(1),
                         "ultimoNumCap", nuevoNum,
                         "fechaModificacionH", Timestamp.now()
-                    ).addOnSuccessListener { finish() }
+                    ).addOnSuccessListener { 
+                        finish() 
+                    }.addOnFailureListener {
+                        btnGuardar.isEnabled = true
+                        Toast.makeText(this, "Error al actualizar historia", Toast.LENGTH_SHORT).show()
+                    }
+                }.addOnFailureListener {
+                    btnGuardar.isEnabled = true
+                    Toast.makeText(this, "Error al guardar capítulo", Toast.LENGTH_SHORT).show()
                 }
+            }.addOnFailureListener {
+                btnGuardar.isEnabled = true
+                Toast.makeText(this, "Error al obtener datos de la historia", Toast.LENGTH_SHORT).show()
             }
         } else {
             // MODO EDICIÓN: Solo datos de contenido y fecha
@@ -95,7 +110,14 @@ class EditorCapituloActivity : AppCompatActivity() {
                 .update(data)
                 .addOnSuccessListener {
                     db.collection("historias").document(idHistoria).update("fechaModificacionH", Timestamp.now())
-                    finish()
+                        .addOnSuccessListener { finish() }
+                        .addOnFailureListener { 
+                            btnGuardar.isEnabled = true 
+                            finish() // Cerramos igual si el cap se guardó pero falló la fecha de historia
+                        }
+                }.addOnFailureListener {
+                    btnGuardar.isEnabled = true
+                    Toast.makeText(this, "Error al actualizar capítulo", Toast.LENGTH_SHORT).show()
                 }
         }
     }

@@ -13,6 +13,7 @@ import com.example.nefelibata.R
 import com.example.nefelibata.models.Capitulo
 import com.example.nefelibata.models.Historia
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
@@ -23,6 +24,7 @@ import com.google.firebase.firestore.Query
 class LeerHistoriaActivity : AppCompatActivity() {
 
     private lateinit var db: FirebaseFirestore
+    private lateinit var auth: FirebaseAuth
     private lateinit var tvTituloHistoria: TextView
     private lateinit var btnNombreAutor: MaterialButton 
     private lateinit var tvTituloCapitulo: TextView
@@ -42,6 +44,7 @@ class LeerHistoriaActivity : AppCompatActivity() {
         setContentView(R.layout.activity_leer_historia)
 
         db = FirebaseFirestore.getInstance()
+        auth = FirebaseAuth.getInstance()
         
         initViews()
         setupListeners()
@@ -69,11 +72,19 @@ class LeerHistoriaActivity : AppCompatActivity() {
         ivBack.setOnClickListener { finish() }
 
         btnNombreAutor.setOnClickListener {
+            val currentUserId = auth.currentUser?.uid
             idAutorActual?.let { id ->
-                val intent = Intent(this, PerfilAutorActivity::class.java).apply {
-                    putExtra("idAutor", id)
+                if (id == currentUserId) {
+                    // Si el autor soy yo, voy a Ajustes
+                    val intent = Intent(this, SettingsActivity::class.java)
+                    startActivity(intent)
+                } else {
+                    // Si es otro autor, voy a su perfil público
+                    val intent = Intent(this, PerfilAutorActivity::class.java).apply {
+                        putExtra("idAutor", id)
+                    }
+                    startActivity(intent)
                 }
-                startActivity(intent)
             }
         }
 

@@ -6,6 +6,8 @@
     <!-- Colores base -->
     <color name="primary_blue">#0D47A1</color>
     <color name="primary_dark_blue">#002171</color>
+    <color name="star_yellow">#FFD600</color>
+    <color name="error_red">#F44336</color>
     
     <!-- Colores semánticos (Modo Claro) -->
     <color name="background_main">#F3F3F3</color>

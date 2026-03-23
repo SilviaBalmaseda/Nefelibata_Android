@@ -142,12 +142,23 @@
     <string name="option_camera">Camera</string>
     <string name="option_gallery">Gallery</string>
     <string name="option_take_photo">Take photo</string>
+    <string name="option_remove_photo">Remove profile picture</string>
     <string name="photo_ready">Photo ready</string>
+    <string name="photo_removed">Profile picture removed</string>
     <string name="error_loading">Error loading</string>
     <string name="updating_profile">Updating profile...</string>
     <string name="name_updated">Username updated</string>
     <string name="name_in_use">That name is already in use, choose another</string>
     <string name="min_name_chars">Minimum %1$d characters</string>
+    <string name="logout_confirm_title">Log Out</string>
+    <string name="logout_confirm_msg">Are you sure you want to log out of the application?</string>
+    <string name="logout_confirm_ok">Log out</string>
+    <string name="delete_photo_confirm_title">Delete photo?</string>
+    <string name="delete_photo_confirm_msg">Are you sure you want to remove your current profile picture?</string>
+    <string name="change_photo_confirm_title">Change profile picture?</string>
+    <string name="change_photo_confirm_msg">This is the selected image. Do you want to apply it?</string>
+    <string name="yes_button">Yes</string>
+    <string name="no_button">No</string>
 
     <!-- Reading & Dialogs -->
     <string name="read_title">READING</string>

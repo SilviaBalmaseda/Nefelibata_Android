@@ -10,7 +10,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.view.ViewCompat
@@ -30,8 +29,8 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.DocumentSnapshot
 import kotlin.math.ceil
-import com.example.nefelibata.R
 import com.example.nefelibata.utils.Constants
 import androidx.core.os.LocaleListCompat
 
@@ -52,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     private var totalPaginas = 1
     private val historiasPorPagina = 5L
     
+    private val paginasSnapshots = mutableMapOf<Int, DocumentSnapshot?>()
     private var listaFavoritosUsuario = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,28 +89,40 @@ class MainActivity : AppCompatActivity() {
         checkUserSession()
         sincronizarTemaDesdeNube()
 
-        btnAnterior.setOnClickListener { if (paginaActual > 1) { paginaActual--; cargarHistoriasDeFirebase() } }
-        btnSiguiente.setOnClickListener { if (paginaActual < totalPaginas) { paginaActual++; cargarHistoriasDeFirebase() } }
+        btnAnterior.setOnClickListener { 
+            if (paginaActual > 1) { 
+                paginaActual--
+                cargarHistoriasDeFirebase() 
+            } 
+        }
+        btnSiguiente.setOnClickListener { 
+            if (paginaActual < totalPaginas) { 
+                paginaActual++
+                cargarHistoriasDeFirebase() 
+            } 
+        }
         ivSettings.setOnClickListener { view -> showUserMenu(view) }
+        
+        obtenerFavoritosYCargarHistorias()
     }
 
     override fun onResume() {
         super.onResume()
-        obtenerFavoritosYCargarHistorias()
+        obtenerFavoritosYCargarHistorias(mantenerPagina = true)
     }
 
-    private fun obtenerFavoritosYCargarHistorias() {
+    private fun obtenerFavoritosYCargarHistorias(mantenerPagina: Boolean = false) {
         val user = auth.currentUser
         if (user != null) {
             db.collection("usuarios").document(user.uid).get()
                 .addOnSuccessListener { doc ->
                     val usuario = doc.toObject(Usuario::class.java)
                     listaFavoritosUsuario = usuario?.idFavoritas?.toMutableList() ?: mutableListOf()
-                    calcularTotalPaginasYCargar()
+                    calcularTotalPaginasYCargar(mantenerPagina)
                 }
-                .addOnFailureListener { calcularTotalPaginasYCargar() }
+                .addOnFailureListener { calcularTotalPaginasYCargar(mantenerPagina) }
         } else {
-            calcularTotalPaginasYCargar()
+            calcularTotalPaginasYCargar(mantenerPagina)
         }
     }
 
@@ -141,15 +153,61 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun cargarHistoriasDeFirebase() {
-        db.collection("historias").orderBy("titulo").limit(historiasPorPagina).get()
-            .addOnSuccessListener { documentos ->
-                val lista = documentos.map { doc ->
+        if (paginaActual == 1) {
+            paginasSnapshots.clear()
+        }
+
+        var query = db.collection("historias").orderBy("titulo").limit(historiasPorPagina)
+        
+        if (paginaActual > 1) {
+            val lastVisible = paginasSnapshots[paginaActual - 1]
+            if (lastVisible != null) {
+                query = query.startAfter(lastVisible)
+            } else {
+                cargarDesdeInicioHastaPagina(paginaActual)
+                return
+            }
+        }
+
+        query.get().addOnSuccessListener { documentos ->
+            if (!documentos.isEmpty) {
+                paginasSnapshots[paginaActual] = documentos.documents[documentos.size() - 1]
+                
+                val lista = documentos.mapNotNull { doc ->
                     val h = doc.toObject(Historia::class.java)
-                    h.idHistoria = doc.id
+                    h?.idHistoria = doc.id
                     h
                 }
                 adapter.actualizarDatos(lista, listaFavoritosUsuario)
                 actualizarVistaPaginacion()
+            }
+        }
+    }
+
+    private fun cargarDesdeInicioHastaPagina(objetivo: Int) {
+        db.collection("historias").orderBy("titulo").limit((objetivo * historiasPorPagina)).get()
+            .addOnSuccessListener { documentos ->
+                if (!documentos.isEmpty) {
+                    for (p in 1..objetivo) {
+                        val index = (p * historiasPorPagina.toInt()) - 1
+                        if (index < documentos.size()) {
+                            paginasSnapshots[p] = documentos.documents[index]
+                        }
+                    }
+                    
+                    val startIndex = (objetivo - 1) * historiasPorPagina.toInt()
+                    if (startIndex < documentos.size()) {
+                        val subListaDocs = documentos.documents.subList(startIndex, documentos.size())
+                        
+                        val lista = subListaDocs.mapNotNull { doc ->
+                            val h = doc.toObject(Historia::class.java)
+                            h?.idHistoria = doc.id
+                            h
+                        }
+                        adapter.actualizarDatos(lista, listaFavoritosUsuario)
+                        actualizarVistaPaginacion()
+                    }
+                }
             }
     }
 
@@ -162,7 +220,6 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             llUserLoggedIn.visibility = View.GONE
-            // Si no hay usuario, forzamos español por defecto si no hay nada configurado
             aplicarIdiomaPorDefecto()
         }
     }
@@ -175,11 +232,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun calcularTotalPaginasYCargar() {
+    private fun calcularTotalPaginasYCargar(mantenerPagina: Boolean) {
         db.collection("historias").count().get(com.google.firebase.firestore.AggregateSource.SERVER)
             .addOnSuccessListener { snapshot ->
                 val total = snapshot.count
                 totalPaginas = ceil(total.toDouble() / historiasPorPagina).toInt().coerceAtLeast(1)
+                
+                if (!mantenerPagina) {
+                    paginaActual = 1
+                    paginasSnapshots.clear()
+                } else if (paginaActual > totalPaginas) {
+                    paginaActual = totalPaginas
+                }
+                
                 cargarHistoriasDeFirebase()
             }
     }
@@ -225,7 +290,14 @@ class MainActivity : AppCompatActivity() {
                 btnNum.setBackgroundColor(Color.parseColor("#0D47A1")); btnNum.setTextColor(Color.WHITE); btnNum.strokeWidth = 0
             } else {
                 btnNum.setTextColor(Color.parseColor("#0D47A1")); btnNum.setStrokeColorResource(android.R.color.darker_gray)
-                btnNum.setOnClickListener { paginaActual = i; cargarHistoriasDeFirebase() }
+                btnNum.setOnClickListener { 
+                    val paginaDestino = i
+                    if (paginaDestino < paginaActual || !paginasSnapshots.containsKey(paginaDestino - 1)) {
+                        paginasSnapshots.clear()
+                    }
+                    paginaActual = paginaDestino
+                    cargarHistoriasDeFirebase()
+                }
             }
             llNumerosPaginas.addView(btnNum)
         }
@@ -237,7 +309,6 @@ class MainActivity : AppCompatActivity() {
             if (document.exists()) {
                 val preferencias = document.get("preferencias") as? Map<*, *>
                 
-                // Sincronizar Tema
                 val temaRemoto = preferencias?.get("tema") as? String
                 temaRemoto?.let {
                     val modeRemoto = when (it) {
@@ -245,14 +316,14 @@ class MainActivity : AppCompatActivity() {
                         "oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
                         else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
                     }
-                    val currentMode = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).getInt("theme_mode", -1)
+                    val sp = getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                    val currentMode = sp.getInt("theme_mode", -1)
                     if (currentMode != modeRemoto) {
-                        getSharedPreferences("AppPrefs", Context.MODE_PRIVATE).edit().putInt("theme_mode", modeRemoto).apply()
+                        sp.edit().putInt("theme_mode", modeRemoto).apply()
                         AppCompatDelegate.setDefaultNightMode(modeRemoto)
                     }
                 }
 
-                // Sincronizar Idioma (Default: esp -> es)
                 val langRemoto = (preferencias?.get("leng") as? String) ?: Constants.DEFAULT_LANG
                 val androidLangCode = if (langRemoto == Constants.LANG_ES) "es" else "en"
                 
@@ -260,7 +331,6 @@ class MainActivity : AppCompatActivity() {
                 if (currentLocales.toLanguageTags() != androidLangCode) {
                     val appLocales = LocaleListCompat.forLanguageTags(androidLangCode)
                     AppCompatDelegate.setApplicationLocales(appLocales)
-                    // Transición suave al recrear
                     overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                 }
             }

@@ -5,9 +5,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
@@ -45,6 +48,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var db: FirebaseFirestore
     private lateinit var storage: FirebaseStorage
     private lateinit var tvName: TextView
+    private lateinit var tvFollowers: TextView
     private lateinit var ivProfile: ShapeableImageView
     private lateinit var sharedPreferences: SharedPreferences
     
@@ -52,11 +56,11 @@ class SettingsActivity : AppCompatActivity() {
     private var fotoUrlActual: String? = null
 
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { subirFotoAFirebase(it) }
+        uri?.let { mostrarConfirmacionCambioFoto(it) }
     }
 
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) cameraUri?.let { subirFotoAFirebase(it) }
+        if (success) cameraUri?.let { mostrarConfirmacionCambioFoto(it) }
     }
 
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -82,6 +86,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         tvName = findViewById(R.id.tv_settings_username)
+        tvFollowers = findViewById(R.id.tv_settings_followers)
         ivProfile = findViewById(R.id.iv_settings_profile)
         val fabEditPhoto = findViewById<FloatingActionButton>(R.id.fab_edit_photo)
         val btnLogout = findViewById<MaterialButton>(R.id.btn_logout)
@@ -99,7 +104,6 @@ class SettingsActivity : AppCompatActivity() {
         tvName.setOnClickListener(editNameListener)
         findViewById<ImageView>(R.id.iv_edit_name).setOnClickListener(editNameListener)
 
-        // Configuración tema
         when (modeSaved) {
             AppCompatDelegate.MODE_NIGHT_NO -> toggleTheme.check(R.id.btn_theme_light)
             AppCompatDelegate.MODE_NIGHT_YES -> toggleTheme.check(R.id.btn_theme_dark)
@@ -113,24 +117,19 @@ class SettingsActivity : AppCompatActivity() {
                     R.id.btn_theme_dark -> "oscuro"
                     else -> "sistema"
                 }
-                guardarPreferenciaTema(temaStr)
+                toggleTheme.postDelayed({ guardarPreferenciaTema(temaStr) }, 200)
             }
         }
 
-        // Configuración idioma
         toggleLang.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 val langCode = if (checkedId == R.id.btn_lang_es) Constants.LANG_ES else Constants.LANG_EN
-                cambiarIdioma(langCode)
+                toggleLang.postDelayed({ cambiarIdioma(langCode) }, 200)
             }
         }
 
         btnLogout.setOnClickListener {
-            auth.signOut()
-            startActivity(Intent(this, LoginActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            })
-            finish()
+            mostrarConfirmacionCerrarSesion()
         }
     }
 
@@ -141,12 +140,14 @@ class SettingsActivity : AppCompatActivity() {
                 val usuario = doc.toObject(Usuario::class.java)
                 usuario?.let {
                     tvName.text = it.nombre
+                    tvFollowers.text = getString(R.string.followers_count, it.numSeguidor)
                     fotoUrlActual = it.fotoUser
                     if (!it.fotoUser.isNullOrEmpty()) {
                         ivProfile.load(it.fotoUser) { transformations(CircleCropTransformation()) }
+                    } else {
+                        ivProfile.setImageResource(android.R.drawable.ic_menu_gallery)
                     }
                     
-                    // Cargar preferencia de idioma
                     val preferencias = it.preferencias
                     val currentLang = preferencias["leng"] ?: Constants.DEFAULT_LANG
                     if (currentLang == Constants.LANG_ES) toggleLang.check(R.id.btn_lang_es)
@@ -161,21 +162,35 @@ class SettingsActivity : AppCompatActivity() {
         val currentLocales = AppCompatDelegate.getApplicationLocales()
         if (currentLocales.toLanguageTags() == androidLangCode) return
 
-        // 1. Guardar en Firestore
         val user = auth.currentUser
         if (user != null) {
             val data = hashMapOf("preferencias" to hashMapOf("leng" to langCode))
             db.collection("usuarios").document(user.uid).set(data, SetOptions.merge())
         }
 
-        // 2. Aplicar cambio con transición suave
         val appLocales: LocaleListCompat = LocaleListCompat.forLanguageTags(androidLangCode)
         AppCompatDelegate.setApplicationLocales(appLocales)
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+    }
+
+    private fun guardarPreferenciaTema(tema: String) {
+        val mode = when (tema) {
+            "claro" -> AppCompatDelegate.MODE_NIGHT_NO
+            "oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
+            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        }
+        val currentMode = AppCompatDelegate.getDefaultNightMode()
+        if (currentMode == mode) return
+
+        sharedPreferences.edit().putInt("theme_mode", mode).apply()
         
-        // Recrear la actividad con transición
-        val intent = Intent(this, SettingsActivity::class.java)
-        startActivity(intent)
-        finish()
+        val user = auth.currentUser
+        if (user != null) {
+            val data = hashMapOf("preferencias" to hashMapOf("tema" to tema))
+            db.collection("usuarios").document(user.uid).set(data, SetOptions.merge())
+        }
+        
+        AppCompatDelegate.setDefaultNightMode(mode)
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
     }
 
@@ -193,9 +208,24 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun mostrarOpcionesImagen() {
-        val opciones = arrayOf(getString(R.string.option_take_photo), getString(R.string.option_gallery))
+        val camaraStr = getString(R.string.option_take_photo)
+        val galeriaStr = getString(R.string.option_gallery)
+        val eliminarStr = getString(R.string.option_remove_photo)
+
+        val tieneFoto = !fotoUrlActual.isNullOrEmpty()
+
+        val eliminarSpannable = SpannableString(eliminarStr)
+        val colorEliminar = if (tieneFoto) Color.RED else Color.LTGRAY
+        eliminarSpannable.setSpan(ForegroundColorSpan(colorEliminar), 0, eliminarSpannable.length, 0)
+
+        val opciones = arrayOf<CharSequence>(camaraStr, galeriaStr, eliminarSpannable)
+        
         AlertDialog.Builder(this).setItems(opciones) { _, which ->
-            if (which == 0) gestionarPermisosCamara() else galleryLauncher.launch("image/*")
+            when (which) {
+                0 -> gestionarPermisosCamara()
+                1 -> galleryLauncher.launch("image/*")
+                2 -> if (tieneFoto) mostrarConfirmacionEliminarFoto()
+            }
         }.show()
     }
 
@@ -213,6 +243,42 @@ class SettingsActivity : AppCompatActivity() {
         cameraLauncher.launch(cameraUri!!)
     }
 
+    private fun mostrarConfirmacionCambioFoto(uri: Uri) {
+        val builder = AlertDialog.Builder(this)
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_viewer, null)
+        val ivPreview = dialogView.findViewById<ImageView>(R.id.iv_full_image)
+        ivPreview.load(uri) { crossfade(true) }
+        builder.setView(dialogView)
+        builder.setTitle(getString(R.string.change_photo_confirm_title))
+        builder.setMessage(getString(R.string.change_photo_confirm_msg))
+        builder.setPositiveButton(getString(R.string.yes_button)) { _, _ -> subirFotoAFirebase(uri) }
+        builder.setNegativeButton(getString(R.string.no_button), null)
+        builder.show()
+    }
+
+    private fun mostrarConfirmacionEliminarFoto() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.delete_photo_confirm_title))
+            .setMessage(getString(R.string.delete_photo_confirm_msg))
+            .setPositiveButton(getString(R.string.yes_button)) { _, _ -> eliminarFotoDePerfil() }
+            .setNegativeButton(getString(R.string.no_button), null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.RED)
+        }
+        dialog.show()
+    }
+
+    private fun eliminarFotoDePerfil() {
+        val user = auth.currentUser ?: return
+        db.collection("usuarios").document(user.uid).update("fotoUser", "").addOnSuccessListener {
+            fotoUrlActual = ""
+            ivProfile.setImageResource(android.R.drawable.ic_menu_gallery)
+            Toast.makeText(this, getString(R.string.photo_removed), Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun subirFotoAFirebase(uri: Uri) {
         val user = auth.currentUser ?: return
         val ref = storage.reference.child("fotos_perfil/${user.uid}.jpg")
@@ -227,29 +293,24 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun guardarPreferenciaTema(tema: String) {
-        val mode = when (tema) {
-            "claro" -> AppCompatDelegate.MODE_NIGHT_NO
-            "oscuro" -> AppCompatDelegate.MODE_NIGHT_YES
-            else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-        }
-        val currentMode = AppCompatDelegate.getDefaultNightMode()
-        if (currentMode == mode) return
+    private fun mostrarConfirmacionCerrarSesion() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.logout_confirm_title))
+            .setMessage(getString(R.string.logout_confirm_msg))
+            .setPositiveButton(getString(R.string.logout_confirm_ok)) { _, _ -> 
+                auth.signOut()
+                startActivity(Intent(this, LoginActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                })
+                finish()
+            }
+            .setNegativeButton(getString(R.string.cancel_button), null)
+            .create()
 
-        sharedPreferences.edit().putInt("theme_mode", mode).apply()
-        AppCompatDelegate.setDefaultNightMode(mode)
-        
-        val user = auth.currentUser
-        if (user != null) {
-            val data = hashMapOf("preferencias" to hashMapOf("tema" to tema))
-            db.collection("usuarios").document(user.uid).set(data, SetOptions.merge())
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.RED)
         }
-        
-        // Reiniciar actividad con transición suave
-        val intent = Intent(this, SettingsActivity::class.java)
-        startActivity(intent)
-        finish()
-        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+        dialog.show()
     }
 
     private fun mostrarDialogoEdicion() {

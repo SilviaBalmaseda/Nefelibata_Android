@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nefelibata</string>
     
@@ -142,12 +143,23 @@
     <string name="option_camera">Cámara</string>
     <string name="option_gallery">Galería</string>
     <string name="option_take_photo">Hacer foto</string>
+    <string name="option_remove_photo">Quitar foto de perfil</string>
     <string name="photo_ready">Foto lista</string>
+    <string name="photo_removed">Foto de perfil eliminada</string>
     <string name="error_loading">Error al cargar</string>
     <string name="updating_profile">Actualizando perfil...</string>
     <string name="name_updated">Nombre actualizado</string>
     <string name="name_in_use">Ese nombre ya está en uso, elige otro</string>
     <string name="min_name_chars">Mínimo %1$d caracteres</string>
+    <string name="logout_confirm_title">Cerrar Sesión</string>
+    <string name="logout_confirm_msg">¿Estás seguro de que quieres salir de la aplicación?</string>
+    <string name="logout_confirm_ok">Salir</string>
+    <string name="delete_photo_confirm_title">¿Eliminar foto?</string>
+    <string name="delete_photo_confirm_msg">¿Estás seguro de que quieres quitar tu foto de perfil actual?</string>
+    <string name="change_photo_confirm_title">¿Cambiar foto de perfil?</string>
+    <string name="change_photo_confirm_msg">Esta es la imagen seleccionada. ¿Deseas aplicarla?</string>
+    <string name="yes_button">Sí</string>
+    <string name="no_button">No</string>
 
     <!-- Reading & Dialogs -->
     <string name="read_title">LECTURA</string>

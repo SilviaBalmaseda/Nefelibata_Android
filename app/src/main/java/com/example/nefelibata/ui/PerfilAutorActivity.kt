@@ -106,10 +106,19 @@ class PerfilAutorActivity : AppCompatActivity() {
 
     private fun obtenerDatosUsuarioLogueado() {
         val currentUser = auth.currentUser
+        
+        // Si es mi propio perfil, oculto el botón de seguir
+        if (currentUser?.uid == idAutor) {
+            btnSeguir.visibility = View.GONE
+        } else {
+            btnSeguir.visibility = View.VISIBLE
+        }
+
         if (currentUser == null) {
             cargarObrasAutor()
             return
         }
+        
         db.collection("usuarios").document(currentUser.uid).get().addOnSuccessListener { doc ->
             val user = doc.toObject(Usuario::class.java)
             listaSiguiendoUsuario = user?.idSiguiendo?.toMutableList() ?: mutableListOf()
@@ -127,8 +136,11 @@ class PerfilAutorActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.login_to_follow), Toast.LENGTH_SHORT).show()
             return
         }
+        
+        // Verificación extra por seguridad
         if (currentUser.uid == idAutor) {
             Toast.makeText(this, getString(R.string.cannot_follow_self), Toast.LENGTH_SHORT).show()
+            btnSeguir.visibility = View.GONE
             return
         }
 

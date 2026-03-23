@@ -1,6 +1,7 @@
 package com.example.nefelibata.adapters
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,13 +9,16 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.example.nefelibata.R
 import com.example.nefelibata.models.Historia
 import com.example.nefelibata.ui.LeerHistoriaActivity
+import com.example.nefelibata.ui.SettingsActivity
 import com.example.nefelibata.ui.SynopsisDialogFragment
 import com.google.android.material.button.MaterialButton
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 
 class HistoriaAdapter(
@@ -46,6 +50,7 @@ class HistoriaAdapter(
     override fun onBindViewHolder(holder: HistoriaViewHolder, position: Int) {
         val historia = listaHistorias[position]
         val context = holder.itemView.context
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
 
         holder.tvTitulo.text = historia.titulo
         holder.tvAutor.text = historia.autor.nombre
@@ -53,8 +58,10 @@ class HistoriaAdapter(
 
         if (listaFavoritosUsuario.contains(historia.idHistoria)) {
             holder.btnFavoritos.setIconResource(android.R.drawable.star_on)
+            holder.btnFavoritos.iconTint = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.star_yellow))
         } else {
             holder.btnFavoritos.setIconResource(android.R.drawable.star_off)
+            holder.btnFavoritos.iconTint = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.text_secondary))
         }
 
         holder.btnFavoritos.setOnClickListener {
@@ -78,6 +85,14 @@ class HistoriaAdapter(
                     synopsis = historia.sinopsis
                 )
                 dialog.show(it.supportFragmentManager, "SynopsisDialog")
+            }
+        }
+
+        // Si el autor de la historia es el usuario actual, redirigir a Ajustes al pulsar el nombre
+        holder.tvAutor.setOnClickListener {
+            if (historia.autor.id == currentUserId) {
+                val intent = Intent(context, SettingsActivity::class.java)
+                context.startActivity(intent)
             }
         }
 
