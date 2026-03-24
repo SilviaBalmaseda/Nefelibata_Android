@@ -1,15 +1,13 @@
 package com.example.nefelibata.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import coil.transform.CircleCropTransformation
 import com.example.nefelibata.R
+import com.example.nefelibata.databinding.ItemMiHistoriaBinding
 import com.example.nefelibata.models.Historia
+import com.example.nefelibata.utils.Constants
 import com.google.firebase.storage.FirebaseStorage
 
 class MisHistoriasAdapter(
@@ -18,57 +16,44 @@ class MisHistoriasAdapter(
     private val onDeleteClick: (Historia) -> Unit
 ) : RecyclerView.Adapter<MisHistoriasAdapter.MiHistoriaViewHolder>() {
 
-    class MiHistoriaViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val ivPortada: ImageView = view.findViewById(R.id.iv_mi_historia_portada)
-        val tvTitulo: TextView = view.findViewById(R.id.tv_mi_historia_titulo)
-        val tvEstado: TextView = view.findViewById(R.id.tv_mi_historia_estado)
-        val ivEdit: ImageView = view.findViewById(R.id.iv_mi_historia_edit)
-        val ivDelete: ImageView = view.findViewById(R.id.iv_mi_historia_delete)
-    }
+    class MiHistoriaViewHolder(val binding: ItemMiHistoriaBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MiHistoriaViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_mi_historia, parent, false)
-        return MiHistoriaViewHolder(view)
+        val binding = ItemMiHistoriaBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return MiHistoriaViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: MiHistoriaViewHolder, position: Int) {
         val historia = listaHistorias[position]
-        holder.tvTitulo.text = historia.titulo
-        
-        // --- TRADUCCIÓN DINÁMICA DE ESTADO ---
         val context = holder.itemView.context
-        val estadoValor = historia.obtenerEstadoValidado()
         
-        // Mapeamos el valor de la BBDD a su recurso traducido
-        val resId = when(estadoValor.lowercase()) {
-            "pendiente", "pending" -> R.string.status_pendiente
-            "en pausa", "on hold" -> R.string.status_en_pausa
-            "terminada", "finished" -> R.string.status_terminada
-            "abandonada", "abandoned" -> R.string.status_abandonada
-            else -> R.string.status_pendiente
-        }
-        
-        holder.tvEstado.text = context.getString(R.string.status_prefix, context.getString(resId))
+        with(holder.binding) {
+            tvMiHistoriaTitulo.text = historia.titulo
+            
+            val estadoValor = historia.obtenerEstadoValidado()
+            val resId = Constants.ESTADOS_MAP[estadoValor] ?: R.string.status_pendiente
+            tvMiHistoriaEstado.text = context.getString(R.string.status_prefix, context.getString(resId))
 
-        holder.ivPortada.setImageResource(android.R.drawable.ic_menu_gallery)
-        val currentId = historia.idHistoria
-        holder.ivPortada.tag = currentId
+            ivMiHistoriaPortada.setImageResource(android.R.drawable.ic_menu_gallery)
+            ivMiHistoriaPortada.tag = historia.idHistoria
 
-        if (historia.imagenUrl.isNotEmpty()) {
-            val storageRef = FirebaseStorage.getInstance().getReference(historia.imagenUrl)
-            storageRef.downloadUrl.addOnSuccessListener { uri ->
-                if (holder.ivPortada.tag == currentId) {
-                    holder.ivPortada.load(uri) {
-                        crossfade(true)
-                        placeholder(android.R.drawable.ic_menu_gallery)
-                        error(android.R.drawable.ic_menu_gallery)
+            if (historia.imagenUrl.isNotEmpty()) {
+                val currentId = historia.idHistoria
+                FirebaseStorage.getInstance().getReference(historia.imagenUrl).downloadUrl
+                    .addOnSuccessListener { uri ->
+                        if (ivMiHistoriaPortada.tag == currentId) {
+                            ivMiHistoriaPortada.load(uri) {
+                                crossfade(true)
+                                placeholder(android.R.drawable.ic_menu_gallery)
+                                error(android.R.drawable.ic_menu_gallery)
+                            }
+                        }
                     }
-                }
             }
-        }
 
-        holder.ivEdit.setOnClickListener { onEditClick(historia) }
-        holder.ivDelete.setOnClickListener { onDeleteClick(historia) }
+            ivMiHistoriaEdit.setOnClickListener { onEditClick(historia) }
+            ivMiHistoriaDelete.setOnClickListener { onDeleteClick(historia) }
+        }
     }
 
     override fun getItemCount(): Int = listaHistorias.size

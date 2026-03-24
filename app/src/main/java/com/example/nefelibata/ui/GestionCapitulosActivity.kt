@@ -2,46 +2,50 @@ package com.example.nefelibata.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.widget.ImageView
-import android.widget.TextView
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.nefelibata.R
 import com.example.nefelibata.adapters.CapitulosGestionAdapter
+import com.example.nefelibata.databinding.ActivityGestionCapitulosBinding
+import com.example.nefelibata.databinding.DialogConfirmDeleteBinding
 import com.example.nefelibata.models.Capitulo
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 
 class GestionCapitulosActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityGestionCapitulosBinding
     private lateinit var db: FirebaseFirestore
-    private lateinit var rvCapitulos: RecyclerView
     private lateinit var idHistoria: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_gestion_capitulos)
+        binding = ActivityGestionCapitulosBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         db = FirebaseFirestore.getInstance()
         idHistoria = intent.getStringExtra("idHistoria") ?: ""
 
-        if (idHistoria.isEmpty()) { finish(); return }
+        if (idHistoria.isEmpty()) { 
+            finish()
+            return 
+        }
 
-        rvCapitulos = findViewById(R.id.rv_gestion_capitulos)
-        rvCapitulos.layoutManager = LinearLayoutManager(this)
+        setupUI()
+    }
 
-        findViewById<ImageView>(R.id.iv_back_gestion_caps).setOnClickListener { finish() }
+    private fun setupUI() {
+        binding.rvGestionCapitulos.layoutManager = LinearLayoutManager(this)
+        binding.ivBackGestionCaps.setOnClickListener { finish() }
         
-        findViewById<FloatingActionButton>(R.id.fab_nuevo_capitulo).setOnClickListener {
-            val intent = Intent(this, EditorCapituloActivity::class.java)
-            intent.putExtra("idHistoria", idHistoria)
+        binding.fabNuevoCapitulo.setOnClickListener {
+            val intent = Intent(this, EditorCapituloActivity::class.java).apply {
+                putExtra("idHistoria", idHistoria)
+            }
             startActivity(intent)
         }
     }
@@ -57,15 +61,14 @@ class GestionCapitulosActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { docs ->
                 val lista = docs.map { d -> 
-                    val cap = d.toObject(Capitulo::class.java)
-                    cap.idCapitulo = d.id
-                    cap
+                    d.toObject(Capitulo::class.java).apply { idCapitulo = d.id }
                 }
-                rvCapitulos.adapter = CapitulosGestionAdapter(lista, 
+                binding.rvGestionCapitulos.adapter = CapitulosGestionAdapter(lista, 
                     onEdit = { cap ->
-                        val intent = Intent(this, EditorCapituloActivity::class.java)
-                        intent.putExtra("idHistoria", idHistoria)
-                        intent.putExtra("idCapitulo", cap.idCapitulo)
+                        val intent = Intent(this, EditorCapituloActivity::class.java).apply {
+                            putExtra("idHistoria", idHistoria)
+                            putExtra("idCapitulo", cap.idCapitulo)
+                        }
                         startActivity(intent)
                     },
                     onDelete = { cap -> confirmarEliminarCapitulo(cap) }
@@ -74,39 +77,37 @@ class GestionCapitulosActivity : AppCompatActivity() {
     }
 
     private fun confirmarEliminarCapitulo(cap: Capitulo) {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_confirm_delete, null)
-        val builder = AlertDialog.Builder(this)
-        builder.setView(dialogView)
+        val dialogBinding = DialogConfirmDeleteBinding.inflate(layoutInflater)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .create()
         
-        val dialog = builder.create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
-        val nombreCap = if (cap.tituloCap.isNullOrEmpty()) {
-            getString(R.string.chapter_prefix, cap.numCapitulo)
-        } else {
-            cap.tituloCap
-        }
-        dialogView.findViewById<TextView>(R.id.tv_confirm_message).text = getString(R.string.delete_chapter_confirm_msg, nombreCap)
+        val nombreCap = cap.tituloCap.takeIf { !it.isNullOrEmpty() } 
+            ?: getString(R.string.chapter_prefix, cap.numCapitulo)
+            
+        dialogBinding.tvConfirmMessage.text = getString(R.string.delete_chapter_confirm_msg, nombreCap)
 
-        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btn_cancel_delete)
-        val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btn_confirm_delete)
-
-        btnCancel.setOnClickListener { dialog.dismiss() }
-
-        btnConfirm.setOnClickListener {
-            db.collection("historias").document(idHistoria)
-                .collection("capitulos").document(cap.idCapitulo).delete()
-                .addOnSuccessListener {
-                    db.collection("historias").document(idHistoria)
-                        .update("contCapitulos", FieldValue.increment(-1))
-                        .addOnSuccessListener {
-                            Toast.makeText(this, getString(R.string.chapter_deleted), Toast.LENGTH_SHORT).show()
-                            cargarCapitulos()
-                            dialog.dismiss()
-                        }
-                }
+        dialogBinding.btnCancelDelete.setOnClickListener { dialog.dismiss() }
+        dialogBinding.btnConfirmDelete.setOnClickListener {
+            eliminarCapitulo(cap.idCapitulo, dialog)
         }
         
         dialog.show()
+    }
+
+    private fun eliminarCapitulo(idCapitulo: String, dialog: AlertDialog) {
+        db.collection("historias").document(idHistoria)
+            .collection("capitulos").document(idCapitulo).delete()
+            .addOnSuccessListener {
+                db.collection("historias").document(idHistoria)
+                    .update("contCapitulos", FieldValue.increment(-1))
+                    .addOnSuccessListener {
+                        Toast.makeText(this, getString(R.string.chapter_deleted), Toast.LENGTH_SHORT).show()
+                        cargarCapitulos()
+                        dialog.dismiss()
+                    }
+            }
     }
 }

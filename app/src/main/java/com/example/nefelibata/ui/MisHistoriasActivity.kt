@@ -4,36 +4,33 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.nefelibata.R
 import com.example.nefelibata.adapters.MisHistoriasAdapter
+import com.example.nefelibata.databinding.ActivityMisHistoriasBinding
+import com.example.nefelibata.databinding.DialogConfirmDeleteBinding
 import com.example.nefelibata.models.Historia
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 
 class MisHistoriasActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityMisHistoriasBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var adapter: MisHistoriasAdapter
-    private lateinit var rvMisHistorias: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_mis_historias)
+        binding = ActivityMisHistoriasBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_mis_historias)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.mainMisHistorias) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
@@ -42,18 +39,12 @@ class MisHistoriasActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        rvMisHistorias = findViewById(R.id.rv_mis_historias)
-        val ivBack = findViewById<ImageView>(R.id.iv_back_mis_historias)
-        val fabCrear = findViewById<FloatingActionButton>(R.id.fab_crear_historia)
-
-        ivBack.setOnClickListener { finish() }
+        binding.ivBackMisHistorias.setOnClickListener { finish() }
+        binding.fabCrearHistoria.setOnClickListener {
+            startActivity(Intent(this, CrearHistoriaActivity::class.java))
+        }
 
         setupRecyclerView()
-        
-        fabCrear.setOnClickListener {
-            val intent = Intent(this, CrearHistoriaActivity::class.java)
-            startActivity(intent)
-        }
     }
 
     override fun onResume() {
@@ -62,24 +53,24 @@ class MisHistoriasActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        rvMisHistorias.layoutManager = LinearLayoutManager(this)
+        binding.rvMisHistorias.layoutManager = LinearLayoutManager(this)
         adapter = MisHistoriasAdapter(
             emptyList(),
             onEditClick = { historia ->
-                val intent = Intent(this, CrearHistoriaActivity::class.java)
-                intent.putExtra("idHistoria", historia.idHistoria)
+                val intent = Intent(this, CrearHistoriaActivity::class.java).apply {
+                    putExtra("idHistoria", historia.idHistoria)
+                }
                 startActivity(intent)
             },
             onDeleteClick = { historia ->
                 mostrarConfirmacionEliminar(historia)
             }
         )
-        rvMisHistorias.adapter = adapter
+        binding.rvMisHistorias.adapter = adapter
     }
 
     private fun cargarMisHistorias() {
         val userId = auth.currentUser?.uid ?: return
-        val tvEmpty = findViewById<TextView>(R.id.tv_empty_mis_historias)
 
         db.collection("historias")
             .whereEqualTo("autor.id", userId)
@@ -92,35 +83,27 @@ class MisHistoriasActivity : AppCompatActivity() {
                 }
                 
                 if (lista.isEmpty()) {
-                    tvEmpty.visibility = View.VISIBLE
-                    rvMisHistorias.visibility = View.GONE
+                    binding.tvEmptyMisHistorias.visibility = View.VISIBLE
+                    binding.rvMisHistorias.visibility = View.GONE
                 } else {
-                    tvEmpty.visibility = View.GONE
-                    rvMisHistorias.visibility = View.VISIBLE
+                    binding.tvEmptyMisHistorias.visibility = View.GONE
+                    binding.rvMisHistorias.visibility = View.VISIBLE
                     adapter.actualizarDatos(lista)
                 }
             }
     }
 
     private fun mostrarConfirmacionEliminar(historia: Historia) {
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_confirm_delete, null)
-        val builder = AlertDialog.Builder(this)
-        builder.setView(dialogView)
+        val dialogBinding = DialogConfirmDeleteBinding.inflate(layoutInflater)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .create()
         
-        val dialog = builder.create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialogBinding.tvConfirmMessage.text = getString(R.string.delete_story_msg)
 
-        val btnCancel = dialogView.findViewById<MaterialButton>(R.id.btn_cancel_delete)
-        val btnConfirm = dialogView.findViewById<MaterialButton>(R.id.btn_confirm_delete)
-        val tvMessage = dialogView.findViewById<TextView>(R.id.tv_confirm_message)
-
-        tvMessage.text = getString(R.string.delete_story_msg)
-
-        btnCancel.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        btnConfirm.setOnClickListener {
+        dialogBinding.btnCancelDelete.setOnClickListener { dialog.dismiss() }
+        dialogBinding.btnConfirmDelete.setOnClickListener {
             eliminarHistoriaYFavoritos(historia.idHistoria)
             dialog.dismiss()
         }
@@ -141,7 +124,6 @@ class MisHistoriasActivity : AppCompatActivity() {
                             batch.update(doc.reference, "idFavoritas", FieldValue.arrayRemove(idHistoria))
                         }
                         batch.commit().addOnCompleteListener {
-                            Toast.makeText(this, getString(R.string.success_msg), Toast.LENGTH_SHORT).show()
                             cargarMisHistorias()
                         }
                     }

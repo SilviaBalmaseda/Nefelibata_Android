@@ -75,6 +75,7 @@
             app:layout_constraintTop_toBottomOf="@id/iv_story_image">
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_leer"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -83,6 +84,7 @@
                 app:strokeColor="?attr/colorOnSurface" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_favoritos"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -95,6 +97,7 @@
                 app:strokeColor="?attr/colorOnSurface" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_sinopsis"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

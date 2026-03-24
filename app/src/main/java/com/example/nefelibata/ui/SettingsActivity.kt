@@ -12,9 +12,6 @@ import android.os.Environment
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
-import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -28,13 +25,11 @@ import androidx.core.view.WindowInsetsCompat
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.example.nefelibata.R
+import com.example.nefelibata.databinding.ActivitySettingsBinding
+import com.example.nefelibata.databinding.DialogImageViewerBinding
 import com.example.nefelibata.models.Usuario
 import com.example.nefelibata.ui.auth.LoginActivity
 import com.example.nefelibata.utils.Constants
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonToggleGroup
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -44,12 +39,10 @@ import java.io.File
 
 class SettingsActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivitySettingsBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var storage: FirebaseStorage
-    private lateinit var tvName: TextView
-    private lateinit var tvFollowers: TextView
-    private lateinit var ivProfile: ShapeableImageView
     private lateinit var sharedPreferences: SharedPreferences
     
     private var cameraUri: Uri? = null
@@ -73,85 +66,78 @@ class SettingsActivity : AppCompatActivity() {
         AppCompatDelegate.setDefaultNightMode(modeSaved)
 
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_settings)
+        binding = ActivitySettingsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
         storage = FirebaseStorage.getInstance()
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_settings)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.mainSettings) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
 
-        tvName = findViewById(R.id.tv_settings_username)
-        tvFollowers = findViewById(R.id.tv_settings_followers)
-        ivProfile = findViewById(R.id.iv_settings_profile)
-        val fabEditPhoto = findViewById<FloatingActionButton>(R.id.fab_edit_photo)
-        val btnLogout = findViewById<MaterialButton>(R.id.btn_logout)
-        val ivBack = findViewById<ImageView>(R.id.iv_back)
-        val toggleTheme = findViewById<MaterialButtonToggleGroup>(R.id.toggle_theme)
-        val toggleLang = findViewById<MaterialButtonToggleGroup>(R.id.toggle_language)
+        setupUI(modeSaved)
+        cargarDatosUsuario()
+    }
 
-        cargarDatosUsuario(toggleLang)
-
-        ivBack.setOnClickListener { finish() }
-        fabEditPhoto.setOnClickListener { mostrarOpcionesImagen() }
-        ivProfile.setOnClickListener { mostrarImagenAmpliada() }
+    private fun setupUI(modeSaved: Int) {
+        binding.ivBack.setOnClickListener { finish() }
+        binding.fabEditPhoto.setOnClickListener { mostrarOpcionesImagen() }
+        binding.ivSettingsProfile.setOnClickListener { mostrarImagenAmpliada() }
         
-        val editNameListener = View.OnClickListener { mostrarDialogoEdicion() }
-        tvName.setOnClickListener(editNameListener)
-        findViewById<ImageView>(R.id.iv_edit_name).setOnClickListener(editNameListener)
+        val editNameListener = { mostrarDialogoEdicion() }
+        binding.tvSettingsUsername.setOnClickListener { editNameListener() }
+        binding.ivEditName.setOnClickListener { editNameListener() }
 
         when (modeSaved) {
-            AppCompatDelegate.MODE_NIGHT_NO -> toggleTheme.check(R.id.btn_theme_light)
-            AppCompatDelegate.MODE_NIGHT_YES -> toggleTheme.check(R.id.btn_theme_dark)
-            else -> toggleTheme.check(R.id.btn_theme_system)
+            AppCompatDelegate.MODE_NIGHT_NO -> binding.toggleTheme.check(R.id.btn_theme_light)
+            AppCompatDelegate.MODE_NIGHT_YES -> binding.toggleTheme.check(R.id.btn_theme_dark)
+            else -> binding.toggleTheme.check(R.id.btn_theme_system)
         }
 
-        toggleTheme.addOnButtonCheckedListener { _, checkedId, isChecked ->
+        binding.toggleTheme.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 val temaStr = when (checkedId) {
                     R.id.btn_theme_light -> "claro"
                     R.id.btn_theme_dark -> "oscuro"
                     else -> "sistema"
                 }
-                toggleTheme.postDelayed({ guardarPreferenciaTema(temaStr) }, 200)
+                binding.toggleTheme.postDelayed({ guardarPreferenciaTema(temaStr) }, 200)
             }
         }
 
-        toggleLang.addOnButtonCheckedListener { _, checkedId, isChecked ->
+        binding.toggleLanguage.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 val langCode = if (checkedId == R.id.btn_lang_es) Constants.LANG_ES else Constants.LANG_EN
-                toggleLang.postDelayed({ cambiarIdioma(langCode) }, 200)
+                binding.toggleLanguage.postDelayed({ cambiarIdioma(langCode) }, 200)
             }
         }
 
-        btnLogout.setOnClickListener {
-            mostrarConfirmacionCerrarSesion()
-        }
+        binding.btnLogout.setOnClickListener { mostrarConfirmacionCerrarSesion() }
     }
 
-    private fun cargarDatosUsuario(toggleLang: MaterialButtonToggleGroup) {
+    private fun cargarDatosUsuario() {
         val user = auth.currentUser ?: return
         db.collection("usuarios").document(user.uid).get().addOnSuccessListener { doc ->
             if (doc.exists()) {
                 val usuario = doc.toObject(Usuario::class.java)
                 usuario?.let {
-                    tvName.text = it.nombre
-                    tvFollowers.text = getString(R.string.followers_count, it.numSeguidor)
+                    binding.tvSettingsUsername.text = it.nombre
+                    binding.tvSettingsFollowers.text = getString(R.string.followers_count, it.numSeguidor)
                     fotoUrlActual = it.fotoUser
                     if (!it.fotoUser.isNullOrEmpty()) {
-                        ivProfile.load(it.fotoUser) { transformations(CircleCropTransformation()) }
+                        binding.ivSettingsProfile.load(it.fotoUser) { transformations(CircleCropTransformation()) }
                     } else {
-                        ivProfile.setImageResource(android.R.drawable.ic_menu_gallery)
+                        binding.ivSettingsProfile.setImageResource(android.R.drawable.ic_menu_gallery)
                     }
                     
                     val preferencias = it.preferencias
                     val currentLang = preferencias["leng"] ?: Constants.DEFAULT_LANG
-                    if (currentLang == Constants.LANG_ES) toggleLang.check(R.id.btn_lang_es)
-                    else toggleLang.check(R.id.btn_lang_en)
+                    if (currentLang == Constants.LANG_ES) binding.toggleLanguage.check(R.id.btn_lang_es)
+                    else binding.toggleLanguage.check(R.id.btn_lang_en)
                 }
             }
         }
@@ -196,14 +182,14 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun mostrarImagenAmpliada() {
         if (fotoUrlActual.isNullOrEmpty()) return
-        val builder = AlertDialog.Builder(this)
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_viewer, null)
-        val ivFull = dialogView.findViewById<ImageView>(R.id.iv_full_image)
-        ivFull.load(fotoUrlActual)
-        builder.setView(dialogView)
-        val dialog = builder.create()
+        val dialogBinding = DialogImageViewerBinding.inflate(layoutInflater)
+        dialogBinding.ivFullImage.load(fotoUrlActual)
+        
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialogView.setOnClickListener { dialog.dismiss() }
+        dialogBinding.root.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
 
@@ -211,15 +197,14 @@ class SettingsActivity : AppCompatActivity() {
         val camaraStr = getString(R.string.option_take_photo)
         val galeriaStr = getString(R.string.option_gallery)
         val eliminarStr = getString(R.string.option_remove_photo)
-
         val tieneFoto = !fotoUrlActual.isNullOrEmpty()
 
-        val eliminarSpannable = SpannableString(eliminarStr)
-        val colorEliminar = if (tieneFoto) Color.RED else Color.LTGRAY
-        eliminarSpannable.setSpan(ForegroundColorSpan(colorEliminar), 0, eliminarSpannable.length, 0)
+        val eliminarSpannable = SpannableString(eliminarStr).apply {
+            val color = if (tieneFoto) Color.RED else Color.LTGRAY
+            setSpan(ForegroundColorSpan(color), 0, length, 0)
+        }
 
         val opciones = arrayOf<CharSequence>(camaraStr, galeriaStr, eliminarSpannable)
-        
         AlertDialog.Builder(this).setItems(opciones) { _, which ->
             when (which) {
                 0 -> gestionarPermisosCamara()
@@ -244,16 +229,16 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun mostrarConfirmacionCambioFoto(uri: Uri) {
-        val builder = AlertDialog.Builder(this)
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_viewer, null)
-        val ivPreview = dialogView.findViewById<ImageView>(R.id.iv_full_image)
-        ivPreview.load(uri) { crossfade(true) }
-        builder.setView(dialogView)
-        builder.setTitle(getString(R.string.change_photo_confirm_title))
-        builder.setMessage(getString(R.string.change_photo_confirm_msg))
-        builder.setPositiveButton(getString(R.string.yes_button)) { _, _ -> subirFotoAFirebase(uri) }
-        builder.setNegativeButton(getString(R.string.no_button), null)
-        builder.show()
+        val dialogBinding = DialogImageViewerBinding.inflate(layoutInflater)
+        dialogBinding.ivFullImage.load(uri) { crossfade(true) }
+        
+        AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .setTitle(getString(R.string.change_photo_confirm_title))
+            .setMessage(getString(R.string.change_photo_confirm_msg))
+            .setPositiveButton(getString(R.string.yes_button)) { _, _ -> subirFotoAFirebase(uri) }
+            .setNegativeButton(getString(R.string.no_button), null)
+            .show()
     }
 
     private fun mostrarConfirmacionEliminarFoto() {
@@ -274,7 +259,7 @@ class SettingsActivity : AppCompatActivity() {
         val user = auth.currentUser ?: return
         db.collection("usuarios").document(user.uid).update("fotoUser", "").addOnSuccessListener {
             fotoUrlActual = ""
-            ivProfile.setImageResource(android.R.drawable.ic_menu_gallery)
+            binding.ivSettingsProfile.setImageResource(android.R.drawable.ic_menu_gallery)
             Toast.makeText(this, getString(R.string.photo_removed), Toast.LENGTH_SHORT).show()
         }
     }
@@ -286,7 +271,7 @@ class SettingsActivity : AppCompatActivity() {
             ref.downloadUrl.addOnSuccessListener { downloadUri ->
                 fotoUrlActual = downloadUri.toString()
                 db.collection("usuarios").document(user.uid).update("fotoUser", fotoUrlActual).addOnSuccessListener {
-                    ivProfile.load(fotoUrlActual) { transformations(CircleCropTransformation()) }
+                    binding.ivSettingsProfile.load(fotoUrlActual) { transformations(CircleCropTransformation()) }
                     Toast.makeText(this, getString(R.string.photo_ready), Toast.LENGTH_SHORT).show()
                 }
             }
@@ -314,30 +299,35 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun mostrarDialogoEdicion() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle(getString(R.string.username_label))
         val input = TextInputEditText(this).apply {
             setPadding(50, 40, 50, 40)
-            setText(tvName.text)
+            setText(binding.tvSettingsUsername.text)
         }
-        builder.setView(input)
-        builder.setPositiveButton(getString(R.string.save_changes_button)) { _, _ ->
-            val nuevoNombre = input.text.toString().trim()
-            if (nuevoNombre.length >= Constants.MIN_NAME_LENGTH) {
-                db.collection("usuarios").whereEqualTo("nombre", nuevoNombre).get().addOnSuccessListener { documents ->
-                    if (documents.isEmpty) {
-                        db.collection("usuarios").document(auth.currentUser!!.uid).update("nombre", nuevoNombre)
-                            .addOnSuccessListener {
-                                tvName.text = nuevoNombre
-                                Toast.makeText(this, getString(R.string.name_updated), Toast.LENGTH_SHORT).show()
-                            }
-                    } else {
-                        Toast.makeText(this, getString(R.string.name_in_use), Toast.LENGTH_SHORT).show()
-                    }
+        
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.username_label))
+            .setView(input)
+            .setPositiveButton(getString(R.string.save_changes_button)) { _, _ ->
+                val nuevoNombre = input.text.toString().trim()
+                if (nuevoNombre.length >= Constants.MIN_NAME_LENGTH) {
+                    actualizarNombre(nuevoNombre)
                 }
             }
+            .setNegativeButton(getString(R.string.cancel_button), null)
+            .show()
+    }
+
+    private fun actualizarNombre(nuevoNombre: String) {
+        db.collection("usuarios").whereEqualTo("nombre", nuevoNombre).get().addOnSuccessListener { documents ->
+            if (documents.isEmpty) {
+                db.collection("usuarios").document(auth.currentUser!!.uid).update("nombre", nuevoNombre)
+                    .addOnSuccessListener {
+                        binding.tvSettingsUsername.text = nuevoNombre
+                        Toast.makeText(this, getString(R.string.name_updated), Toast.LENGTH_SHORT).show()
+                    }
+            } else {
+                Toast.makeText(this, getString(R.string.name_in_use), Toast.LENGTH_SHORT).show()
+            }
         }
-        builder.setNegativeButton(getString(R.string.cancel_button), null)
-        builder.show()
     }
 }

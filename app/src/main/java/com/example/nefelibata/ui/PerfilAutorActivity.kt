@@ -3,23 +3,20 @@ package com.example.nefelibata.ui
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
 import com.example.nefelibata.R
 import com.example.nefelibata.adapters.HistoriaAdapter
+import com.example.nefelibata.databinding.ActivityPerfilAutorBinding
+import com.example.nefelibata.databinding.DialogImageViewerBinding
 import com.example.nefelibata.models.Historia
 import com.example.nefelibata.models.Usuario
-import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -27,14 +24,10 @@ import com.google.firebase.firestore.SetOptions
 
 class PerfilAutorActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityPerfilAutorBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
-    private lateinit var rvHistorias: RecyclerView
     private lateinit var adapter: HistoriaAdapter
-    private lateinit var btnSeguir: MaterialButton
-    private lateinit var tvSeguidores: TextView
-    private lateinit var ivToggle: ImageView
-    private lateinit var ivFoto: ImageView
     
     private var idAutor: String = ""
     private var fotoUrlAutor: String? = null
@@ -44,7 +37,8 @@ class PerfilAutorActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_perfil_autor)
+        binding = ActivityPerfilAutorBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
@@ -52,66 +46,53 @@ class PerfilAutorActivity : AppCompatActivity() {
 
         if (idAutor.isEmpty()) { finish(); return }
 
-        // Inicializar vistas
-        val ivBack = findViewById<ImageView>(R.id.iv_back_perfil)
-        val tvNombre = findViewById<TextView>(R.id.tv_perfil_nombre)
-        tvSeguidores = findViewById(R.id.tv_perfil_seguidores)
-        ivFoto = findViewById(R.id.iv_perfil_foto)
-        btnSeguir = findViewById(R.id.btn_perfil_seguir)
-        rvHistorias = findViewById(R.id.rv_perfil_historias)
-        ivToggle = findViewById(R.id.iv_perfil_toggle_obras)
-        val llHeaderObras = findViewById<LinearLayout>(R.id.ll_perfil_obras_header)
+        setupUI()
+        setupRecyclerView()
+        obtenerDatosUsuarioLogueado()
+        cargarDatosAutor()
+    }
 
-        ivBack.setOnClickListener { finish() }
+    private fun setupUI() {
+        binding.ivBackPerfil.setOnClickListener { finish() }
 
-        // Lógica colapsable
-        llHeaderObras.setOnClickListener {
-            if (rvHistorias.visibility == View.VISIBLE) {
-                rvHistorias.visibility = View.GONE
-                ivToggle.setImageResource(android.R.drawable.arrow_down_float)
+        binding.llPerfilObrasHeader.setOnClickListener {
+            if (binding.rvPerfilHistorias.visibility == View.VISIBLE) {
+                binding.rvPerfilHistorias.visibility = View.GONE
+                binding.ivPerfilToggleObras.setImageResource(android.R.drawable.arrow_down_float)
             } else {
-                rvHistorias.visibility = View.VISIBLE
-                ivToggle.setImageResource(android.R.drawable.arrow_up_float)
+                binding.rvPerfilHistorias.visibility = View.VISIBLE
+                binding.ivPerfilToggleObras.setImageResource(android.R.drawable.arrow_up_float)
             }
         }
 
-        // Lógica para ampliar foto
-        ivFoto.setOnClickListener { mostrarImagenAmpliada() }
-
-        setupRecyclerView()
-        obtenerDatosUsuarioLogueado()
-        cargarDatosAutor(tvNombre)
-
-        btnSeguir.setOnClickListener { gestionarSeguimiento() }
+        binding.ivPerfilFoto.setOnClickListener { mostrarImagenAmpliada() }
+        binding.btnPerfilSeguir.setOnClickListener { gestionarSeguimiento() }
     }
 
     private fun mostrarImagenAmpliada() {
         if (fotoUrlAutor.isNullOrEmpty()) return
 
-        val builder = AlertDialog.Builder(this)
-        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_image_viewer, null)
-        val ivFull = dialogView.findViewById<ImageView>(R.id.iv_full_image)
-        
-        ivFull.load(fotoUrlAutor) {
+        val dialogBinding = DialogImageViewerBinding.inflate(layoutInflater)
+        dialogBinding.ivFullImage.load(fotoUrlAutor) {
             crossfade(true)
             placeholder(android.R.drawable.ic_menu_gallery)
         }
 
-        builder.setView(dialogView)
-        val dialog = builder.create()
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .create()
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-        dialogView.setOnClickListener { dialog.dismiss() }
+        dialogBinding.root.setOnClickListener { dialog.dismiss() }
         dialog.show()
     }
 
     private fun obtenerDatosUsuarioLogueado() {
         val currentUser = auth.currentUser
         
-        // Si es mi propio perfil, oculto el botón de seguir
         if (currentUser?.uid == idAutor) {
-            btnSeguir.visibility = View.GONE
+            binding.btnPerfilSeguir.visibility = View.GONE
         } else {
-            btnSeguir.visibility = View.VISIBLE
+            binding.btnPerfilSeguir.visibility = View.VISIBLE
         }
 
         if (currentUser == null) {
@@ -131,16 +112,13 @@ class PerfilAutorActivity : AppCompatActivity() {
     }
 
     private fun gestionarSeguimiento() {
-        val currentUser = auth.currentUser
-        if (currentUser == null) {
+        val currentUser = auth.currentUser ?: run {
             Toast.makeText(this, getString(R.string.login_to_follow), Toast.LENGTH_SHORT).show()
             return
         }
         
-        // Verificación extra por seguridad
         if (currentUser.uid == idAutor) {
-            Toast.makeText(this, getString(R.string.cannot_follow_self), Toast.LENGTH_SHORT).show()
-            btnSeguir.visibility = View.GONE
+            binding.btnPerfilSeguir.visibility = View.GONE
             return
         }
 
@@ -160,25 +138,25 @@ class PerfilAutorActivity : AppCompatActivity() {
         }
         
         actualizarBotonSeguir()
-        tvSeguidores.text = getString(R.string.followers_count, numSeguidoresActual)
+        binding.tvPerfilSeguidores.text = getString(R.string.followers_count, numSeguidoresActual)
     }
 
     private fun actualizarBotonSeguir() {
         if (listaSiguiendoUsuario.contains(idAutor)) {
-            btnSeguir.text = getString(R.string.unfollow_button)
-            btnSeguir.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F44336"))
+            binding.btnPerfilSeguir.text = getString(R.string.unfollow_button)
+            binding.btnPerfilSeguir.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F44336"))
         } else {
-            btnSeguir.text = getString(R.string.follow_button)
-            btnSeguir.backgroundTintList = ColorStateList.valueOf(resources.getColor(R.color.primary_blue))
+            binding.btnPerfilSeguir.text = getString(R.string.follow_button)
+            binding.btnPerfilSeguir.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, R.color.primary_blue))
         }
     }
 
     private fun setupRecyclerView() {
-        rvHistorias.layoutManager = LinearLayoutManager(this)
+        binding.rvPerfilHistorias.layoutManager = LinearLayoutManager(this)
         adapter = HistoriaAdapter(emptyList(), emptyList()) { historia ->
             gestionarFavorito(historia)
         }
-        rvHistorias.adapter = adapter
+        binding.rvPerfilHistorias.adapter = adapter
     }
 
     private fun gestionarFavorito(historia: Historia) {
@@ -207,16 +185,16 @@ class PerfilAutorActivity : AppCompatActivity() {
         }
     }
 
-    private fun cargarDatosAutor(tvName: TextView) {
+    private fun cargarDatosAutor() {
         db.collection("usuarios").document(idAutor).get().addOnSuccessListener { doc ->
             val usuario = doc.toObject(Usuario::class.java)
             usuario?.let {
-                tvName.text = it.nombre
+                binding.tvPerfilNombre.text = it.nombre
                 numSeguidoresActual = it.numSeguidor
-                tvSeguidores.text = getString(R.string.followers_count, numSeguidoresActual)
+                binding.tvPerfilSeguidores.text = getString(R.string.followers_count, numSeguidoresActual)
                 fotoUrlAutor = it.fotoUser
                 if (!fotoUrlAutor.isNullOrEmpty()) {
-                    ivFoto.load(fotoUrlAutor) { 
+                    binding.ivPerfilFoto.load(fotoUrlAutor) { 
                         transformations(CircleCropTransformation())
                         placeholder(android.R.drawable.ic_menu_gallery)
                     }

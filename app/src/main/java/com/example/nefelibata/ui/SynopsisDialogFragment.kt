@@ -6,37 +6,33 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.fragment.app.DialogFragment
-import com.example.nefelibata.R
-import com.google.android.material.button.MaterialButton
+import com.example.nefelibata.databinding.DialogSynopsisBinding
 
 class SynopsisDialogFragment : DialogFragment() {
+
+    private var _binding: DialogSynopsisBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.dialog_synopsis, container, false)
-
+    ): View {
+        _binding = DialogSynopsisBinding.inflate(inflater, container, false)
         dialog?.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        return binding.root
+    }
 
-        val tvStatusValue = view.findViewById<TextView>(R.id.tv_dialog_status_value)
-        val tvGenresValue = view.findViewById<TextView>(R.id.tv_dialog_genres_value)
-        val tvSynopsisValue = view.findViewById<TextView>(R.id.tv_dialog_synopsis_value)
-        val ivClose = view.findViewById<ImageView>(R.id.iv_close_dialog)
-        val btnClose = view.findViewById<MaterialButton>(R.id.btn_close_dialog)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        tvStatusValue.text = arguments?.getString("status") ?: ""
-        tvGenresValue.text = arguments?.getString("genres") ?: ""
-        tvSynopsisValue.text = arguments?.getString("synopsis") ?: ""
+        binding.tvDialogStatusValue.text = arguments?.getString(ARG_STATUS) ?: ""
+        binding.tvDialogGenresValue.text = arguments?.getString(ARG_GENRES) ?: ""
+        binding.tvDialogSynopsisValue.text = arguments?.getString(ARG_SYNOPSIS) ?: ""
 
-        ivClose.setOnClickListener { dismiss() }
-        btnClose.setOnClickListener { dismiss() }
-
-        return view
+        binding.ivCloseDialog.setOnClickListener { dismiss() }
+        binding.btnCloseDialog.setOnClickListener { dismiss() }
     }
 
     override fun onStart() {
@@ -47,16 +43,24 @@ class SynopsisDialogFragment : DialogFragment() {
         )
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     companion object {
+        private const val ARG_STATUS = "status"
+        private const val ARG_GENRES = "genres"
+        private const val ARG_SYNOPSIS = "synopsis"
+
         fun newInstance(status: String, genres: String, synopsis: String): SynopsisDialogFragment {
-            val fragment = SynopsisDialogFragment()
-            val args = Bundle().apply {
-                putString("status", status)
-                putString("genres", genres)
-                putString("synopsis", synopsis)
+            return SynopsisDialogFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_STATUS, status)
+                    putString(ARG_GENRES, genres)
+                    putString(ARG_SYNOPSIS, synopsis)
+                }
             }
-            fragment.arguments = args
-            return fragment
         }
     }
 }

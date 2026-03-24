@@ -7,7 +7,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,13 +18,11 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import coil.load
 import com.example.nefelibata.R
+import com.example.nefelibata.databinding.ActivityCrearHistoriaBinding
 import com.example.nefelibata.models.Autor
 import com.example.nefelibata.models.Historia
 import com.example.nefelibata.utils.Constants
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
-import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -35,33 +34,27 @@ import java.util.UUID
 
 class CrearHistoriaActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityCrearHistoriaBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var storage: FirebaseStorage
-    
-    private lateinit var etTitulo: TextInputEditText
-    private lateinit var etSinopsis: TextInputEditText
-    private lateinit var actvEstado: AutoCompleteTextView
-    private lateinit var cgGeneros: ChipGroup
-    private lateinit var etTituloCap: TextInputEditText
-    private lateinit var etContenidoCap: TextInputEditText
-    private lateinit var btnGuardar: MaterialButton
-    private lateinit var ivToggle: ImageView
-    private lateinit var capSection: View
-    private lateinit var ivPortadaPrevia: ImageView
-    private lateinit var cvPortadaPrevia: View
-    private lateinit var btnSubirPortada: MaterialButton
     
     private var imageUri: Uri? = null
     private var cameraUri: Uri? = null
     private var idHistoriaEdicion: String? = null
 
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { imageUri = it; Toast.makeText(this, getString(R.string.photo_ready), Toast.LENGTH_SHORT).show() }
+        uri?.let { 
+            imageUri = it
+            Toast.makeText(this, getString(R.string.photo_ready), Toast.LENGTH_SHORT).show() 
+        }
     }
 
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success) { imageUri = cameraUri; Toast.makeText(this, getString(R.string.photo_ready), Toast.LENGTH_SHORT).show() }
+        if (success) { 
+            imageUri = cameraUri
+            Toast.makeText(this, getString(R.string.photo_ready), Toast.LENGTH_SHORT).show() 
+        }
     }
 
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
@@ -70,83 +63,74 @@ class CrearHistoriaActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_crear_historia)
+        binding = ActivityCrearHistoriaBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
         storage = FirebaseStorage.getInstance()
 
-        etTitulo = findViewById(R.id.et_crear_titulo)
-        etSinopsis = findViewById(R.id.et_crear_sinopsis)
-        actvEstado = findViewById(R.id.actv_crear_estado)
-        cgGeneros = findViewById(R.id.cg_crear_generos)
-        etTituloCap = findViewById(R.id.et_crear_titulo_cap)
-        etContenidoCap = findViewById(R.id.et_crear_contenido_cap)
-        btnGuardar = findViewById(R.id.btn_guardar_historia)
-        ivToggle = findViewById(R.id.iv_toggle_generos_crear)
-        capSection = findViewById(R.id.ll_seccion_primer_capitulo)
-        ivPortadaPrevia = findViewById(R.id.iv_crear_portada_previa)
-        cvPortadaPrevia = findViewById(R.id.cv_portada_previa)
-        btnSubirPortada = findViewById(R.id.btn_subir_portada)
-
-        findViewById<ImageView>(R.id.iv_back_crear).setOnClickListener { finish() }
-        btnSubirPortada.setOnClickListener { mostrarDialogoFoto() }
-
-        val btnGestionarCaps = findViewById<MaterialButton>(R.id.btn_gestionar_capitulos)
-
-        findViewById<LinearLayout>(R.id.ll_generos_header_crear).setOnClickListener {
-            cgGeneros.isVisible = !cgGeneros.isVisible
-            ivToggle.setImageResource(if (cgGeneros.isVisible) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float)
-        }
-
+        setupUI()
         setupFormulario()
 
         idHistoriaEdicion = intent.getStringExtra("idHistoria")
         if (idHistoriaEdicion != null) {
             configurarModoEdicion(idHistoriaEdicion!!)
-            btnGestionarCaps.visibility = View.VISIBLE
-            btnGestionarCaps.setOnClickListener {
-                val intent = Intent(this, GestionCapitulosActivity::class.java)
-                intent.putExtra("idHistoria", idHistoriaEdicion)
-                startActivity(intent)
-            }
         } else {
-            btnSubirPortada.text = getString(R.string.add_cover_button)
-            btnGuardar.text = getString(R.string.publish_story_button)
+            binding.btnSubirPortada.text = getString(R.string.add_cover_button)
+            binding.btnGuardarHistoria.text = getString(R.string.publish_story_button)
+        }
+    }
+
+    private fun setupUI() {
+        binding.ivBackCrear.setOnClickListener { finish() }
+        binding.btnSubirPortada.setOnClickListener { mostrarDialogoFoto() }
+
+        binding.llGenerosHeaderCrear.setOnClickListener {
+            binding.cgCrearGeneros.isVisible = !binding.cgCrearGeneros.isVisible
+            binding.ivToggleGenerosCrear.setImageResource(
+                if (binding.cgCrearGeneros.isVisible) android.R.drawable.arrow_up_float 
+                else android.R.drawable.arrow_down_float
+            )
         }
 
-        btnGuardar.setOnClickListener { guardarCambios() }
+        binding.btnGuardarHistoria.setOnClickListener { guardarCambios() }
+        
+        binding.btnGestionarCapitulos.setOnClickListener {
+            val intent = Intent(this, GestionCapitulosActivity::class.java).apply {
+                putExtra("idHistoria", idHistoriaEdicion)
+            }
+            startActivity(intent)
+        }
     }
 
     private fun configurarModoEdicion(id: String) {
-        findViewById<TextView>(R.id.tv_crear_historia_title).text = getString(R.string.edit_story_title)
-        btnGuardar.text = getString(R.string.update_story_button)
-        btnSubirPortada.text = getString(R.string.edit_cover_button)
-        capSection.isVisible = false
+        binding.tvCrearHistoriaTitle.text = getString(R.string.edit_story_title)
+        binding.btnGuardarHistoria.text = getString(R.string.update_story_button)
+        binding.btnSubirPortada.text = getString(R.string.edit_cover_button)
+        binding.llSeccionPrimerCapitulo.isVisible = false
+        binding.btnGestionarCapitulos.visibility = View.VISIBLE
 
         db.collection("historias").document(id).get().addOnSuccessListener { doc ->
             val historia = doc.toObject(Historia::class.java)
-            historia?.let {
-                etTitulo.setText(it.titulo)
-                etSinopsis.setText(it.sinopsis)
+            historia?.let { h ->
+                binding.etCrearTitulo.setText(h.titulo)
+                binding.etCrearSinopsis.setText(h.sinopsis)
                 
-                // Cargar estado traducido
-                val estadoValor = it.estado["es"] ?: "Pendiente"
+                val estadoValor = h.estado["es"] ?: "Pendiente"
                 val resId = Constants.ESTADOS_MAP[estadoValor] ?: R.string.status_pendiente
-                actvEstado.setText(getString(resId), false)
+                binding.actvCrearEstado.setText(getString(resId), false)
                 
-                if (it.imagenUrl.isNotEmpty()) {
-                    cvPortadaPrevia.visibility = View.VISIBLE
-                    storage.getReference(it.imagenUrl).downloadUrl.addOnSuccessListener { uri ->
-                        ivPortadaPrevia.load(uri)
+                if (h.imagenUrl.isNotEmpty()) {
+                    binding.cvPortadaPrevia.visibility = View.VISIBLE
+                    storage.getReference(h.imagenUrl).downloadUrl.addOnSuccessListener { uri ->
+                        binding.ivCrearPortadaPrevia.load(uri)
                     }
                 }
 
-                val generosActuales = it.genero["es"] ?: emptyList()
-                val generosTraducidos = Constants.getGenerosTraducidos(this)
-                for (i in 0 until cgGeneros.childCount) {
-                    val chip = cgGeneros.getChildAt(i) as Chip
-                    // Comprobamos si el texto del chip (ya traducido) coincide con el nombre en la DB traducido
+                val generosActuales = h.genero["es"] ?: emptyList()
+                for (i in 0 until binding.cgCrearGeneros.childCount) {
+                    val chip = binding.cgCrearGeneros.getChildAt(i) as Chip
                     if (generosActuales.contains(Constants.GENEROS_DB[i])) {
                         chip.isChecked = true
                     }
@@ -177,31 +161,29 @@ class CrearHistoriaActivity : AppCompatActivity() {
     }
 
     private fun setupFormulario() {
-        // Selector de Estados TRADUCIDO
         val estadosTraducidos = Constants.getEstadosTraducidos(this)
-        actvEstado.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estadosTraducidos))
-        actvEstado.setText(estadosTraducidos.first(), false)
+        binding.actvCrearEstado.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estadosTraducidos))
+        binding.actvCrearEstado.setText(estadosTraducidos.first(), false)
 
-        // Chips de Géneros TRADUCIDOS
         val generosTraducidos = Constants.getGenerosTraducidos(this)
         for (g in generosTraducidos) {
             val chip = Chip(this)
             chip.text = g
             chip.isCheckable = true
-            cgGeneros.addView(chip)
+            binding.cgCrearGeneros.addView(chip)
         }
     }
 
     private fun guardarCambios() {
-        val titulo = etTitulo.text.toString().trim()
+        val titulo = binding.etCrearTitulo.text.toString().trim()
         
         if (titulo.length < Constants.MIN_STORY_TITLE_LENGTH) {
             Toast.makeText(this, getString(R.string.min_story_title_chars, Constants.MIN_STORY_TITLE_LENGTH), Toast.LENGTH_SHORT).show()
             return
         }
 
-        btnGuardar.isEnabled = false
-        btnGuardar.text = getString(R.string.saving_msg)
+        binding.btnGuardarHistoria.isEnabled = false
+        binding.btnGuardarHistoria.text = getString(R.string.saving_msg)
 
         lifecycleScope.launch {
             try {
@@ -213,25 +195,22 @@ class CrearHistoriaActivity : AppCompatActivity() {
                     downloadUrl = ref.path
                 }
 
-                // Obtener géneros seleccionados (Guardamos el nombre original de la BBDD)
                 val generosSel = mutableListOf<String>()
-                val generosTraducidos = Constants.getGenerosTraducidos(this@CrearHistoriaActivity)
-                for (i in 0 until cgGeneros.childCount) {
-                    val chip = cgGeneros.getChildAt(i) as Chip
+                for (i in 0 until binding.cgCrearGeneros.childCount) {
+                    val chip = binding.cgCrearGeneros.getChildAt(i) as Chip
                     if (chip.isChecked) {
                         generosSel.add(Constants.GENEROS_DB[i])
                     }
                 }
 
-                // Obtener estado seleccionado (Mapeamos de la traducción al valor DB)
-                val estadoSelTraducido = actvEstado.text.toString()
+                val estadoSelTraducido = binding.actvCrearEstado.text.toString()
                 val estadosTraducidos = Constants.getEstadosTraducidos(this@CrearHistoriaActivity)
                 val indiceEstado = estadosTraducidos.indexOf(estadoSelTraducido)
                 val estadoDB = if (indiceEstado != -1) Constants.ESTADOS_DB[indiceEstado] else "Pendiente"
 
                 val data = mutableMapOf<String, Any>(
                     "titulo" to titulo,
-                    "sinopsis" to etSinopsis.text.toString().trim(),
+                    "sinopsis" to binding.etCrearSinopsis.text.toString().trim(),
                     "estado" to mapOf("es" to estadoDB),
                     "genero" to mapOf("es" to if(generosSel.isEmpty()) listOf("Ninguno") else generosSel),
                     "fechaModificacionH" to Timestamp.now()
@@ -240,8 +219,10 @@ class CrearHistoriaActivity : AppCompatActivity() {
 
                 if (idHistoriaEdicion == null) {
                     val ref = db.collection("historias").document()
+                    val userName = db.collection("usuarios").document(user.uid).get().await().getString("nombre") ?: "Anónimo"
+                    
                     data["idHistoria"] = ref.id
-                    data["autor"] = Autor(id = user.uid, nombre = db.collection("usuarios").document(user.uid).get().await().getString("nombre") ?: "Anónimo")
+                    data["autor"] = Autor(id = user.uid, nombre = userName)
                     data["numFavoritos"] = 0
                     data["fechaCreacionH"] = Timestamp.now()
                     data["contCapitulos"] = 1L
@@ -252,8 +233,8 @@ class CrearHistoriaActivity : AppCompatActivity() {
                     capRef.set(hashMapOf(
                         "idCapitulo" to capRef.id,
                         "numCapitulo" to 1L,
-                        "tituloCap" to etTituloCap.text.toString().trim(),
-                        "historiaCap" to etContenidoCap.text.toString().trim(),
+                        "tituloCap" to binding.etCrearTituloCap.text.toString().trim(),
+                        "historiaCap" to binding.etCrearContenidoCap.text.toString().trim(),
                         "fechaCreacionC" to Timestamp.now(),
                         "fechaModificacionC" to Timestamp.now()
                     )).await()
@@ -266,8 +247,8 @@ class CrearHistoriaActivity : AppCompatActivity() {
                 finish()
             } catch (e: Exception) {
                 Toast.makeText(this@CrearHistoriaActivity, "${getString(R.string.error_loading)}: ${e.message}", Toast.LENGTH_LONG).show()
-                btnGuardar.isEnabled = true
-                btnGuardar.text = getString(R.string.update_story_button)
+                binding.btnGuardarHistoria.isEnabled = true
+                binding.btnGuardarHistoria.text = getString(R.string.update_story_button)
             }
         }
     }

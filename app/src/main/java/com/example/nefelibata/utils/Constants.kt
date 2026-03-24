@@ -12,8 +12,8 @@ object Constants {
     const val LANG_EN = "ing"
     const val DEFAULT_LANG = LANG_ES
 
-    // Estos se quedan para identificar en la BBDD (No cambian)
     val ESTADOS_DB = listOf("Pendiente", "En pausa", "Terminada", "Abandonada")
+    
     val GENEROS_DB = listOf(
         "Acción", "Aventura", "Comedia", "Drama", "Deportes", 
         "Fantasía", "Magia", "Musical", "Psicológico", "Romance", 
@@ -43,12 +43,9 @@ object Constants {
         "Tragedia" to R.string.genre_tragedia
     )
 
-    // FUNCIONES PARA OBTENER LISTAS TRADUCIDAS
-    fun getEstadosTraducidos(context: Context): List<String> {
-        return ESTADOS_DB.map { context.getString(ESTADOS_MAP[it]!!) }
-    }
+    fun getEstadosTraducidos(context: Context): List<String> = 
+        ESTADOS_DB.map { context.getString(ESTADOS_MAP[it]!!) }
 
-    fun getGenerosTraducidos(context: Context): List<String> {
-        return GENEROS_DB.map { context.getString(GENEROS_MAP[it]!!) }
-    }
+    fun getGenerosTraducidos(context: Context): List<String> = 
+        GENEROS_DB.map { context.getString(GENEROS_MAP[it]!!) }
 }
