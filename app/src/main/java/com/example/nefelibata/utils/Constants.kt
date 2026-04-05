@@ -12,6 +12,9 @@ object Constants {
     const val LANG_EN = "ing"
     const val DEFAULT_LANG = LANG_ES
 
+    // Icono por defecto para historias sin portada
+    val PORTADA_DEFECTO = android.R.drawable.ic_menu_gallery
+
     val ESTADOS_DB = listOf("Pendiente", "En pausa", "Terminada", "Abandonada")
     
     val GENEROS_DB = listOf(

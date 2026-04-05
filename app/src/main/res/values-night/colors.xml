@@ -3,9 +3,9 @@
     <color name="black">#FFFFFFFF</color>
     <color name="white">#FF121212</color>
 
-    <!-- Ajustamos el azul para modo oscuro (más suave) -->
-    <color name="primary_blue">#90CAF9</color>
-    <color name="primary_dark_blue">#42A5F5</color>
+    <!-- Usamos el mismo azul oscuro intenso que en modo claro -->
+    <color name="primary_blue">#0D47A1</color>
+    <color name="primary_dark_blue">#002171</color>
 
     <!-- Colores semánticos (Modo Oscuro) -->
     <color name="background_main">#121212</color>

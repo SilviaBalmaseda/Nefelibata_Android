@@ -1,6 +1,7 @@
 package com.example.nefelibata.adapters
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
@@ -10,6 +11,9 @@ import com.example.nefelibata.models.Historia
 import com.example.nefelibata.utils.Constants
 import com.google.firebase.storage.FirebaseStorage
 
+/**
+ * Adaptador para el listado de "Mis Historias" del autor.
+ */
 class MisHistoriasAdapter(
     private var listaHistorias: List<Historia>,
     private val onEditClick: (Historia) -> Unit,
@@ -30,23 +34,36 @@ class MisHistoriasAdapter(
         with(holder.binding) {
             tvMiHistoriaTitulo.text = historia.titulo
             
+            // Traducción del estado de la historia
             val estadoValor = historia.obtenerEstadoValidado()
             val resId = Constants.ESTADOS_MAP[estadoValor] ?: R.string.status_pendiente
             tvMiHistoriaEstado.text = context.getString(R.string.status_prefix, context.getString(resId))
 
-            ivMiHistoriaPortada.setImageResource(android.R.drawable.ic_menu_gallery)
+            // --- GESTIÓN DE IMAGEN POR DEFECTO ---
             ivMiHistoriaPortada.tag = historia.idHistoria
+            ivMiHistoriaPortada.visibility = View.VISIBLE
+            
+            val defaultImg = Constants.PORTADA_DEFECTO
 
-            if (historia.imagenUrl.isNotEmpty()) {
+            if (historia.imagenUrl.isEmpty()) {
+                // Si no hay imagen, forzamos la carga del icono por defecto y limpiamos Coil
+                ivMiHistoriaPortada.load(defaultImg)
+            } else {
+                // Si hay imagen, cargamos la de Firebase Storage
                 val currentId = historia.idHistoria
                 FirebaseStorage.getInstance().getReference(historia.imagenUrl).downloadUrl
                     .addOnSuccessListener { uri ->
                         if (ivMiHistoriaPortada.tag == currentId) {
                             ivMiHistoriaPortada.load(uri) {
                                 crossfade(true)
-                                placeholder(android.R.drawable.ic_menu_gallery)
-                                error(android.R.drawable.ic_menu_gallery)
+                                placeholder(defaultImg)
+                                error(defaultImg)
                             }
+                        }
+                    }
+                    .addOnFailureListener {
+                        if (ivMiHistoriaPortada.tag == currentId) {
+                            ivMiHistoriaPortada.load(defaultImg)
                         }
                     }
             }
