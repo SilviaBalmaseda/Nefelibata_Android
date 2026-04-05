@@ -33,6 +33,7 @@
     <!-- Search -->
     <string name="search_title">BÚSQUEDA</string>
     <string name="search_hint">Buscar...</string>
+    <string name="search_options_toggle">Opciones de búsqueda</string>
     <string name="tab_stories">HISTORIAS</string>
     <string name="tab_authors">AUTORES</string>
     <string name="status_label">Estado</string>

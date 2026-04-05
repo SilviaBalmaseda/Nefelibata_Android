@@ -20,7 +20,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 
 /**
- * Adaptador para mostrar una lista de historias en un RecyclerView.
+ * Adaptador para mostrar una lista de historias usando el diseño de tarjetas grandes.
  */
 class HistoriaAdapter(
     private var listaHistorias: List<Historia>,
@@ -77,17 +77,12 @@ class HistoriaAdapter(
                 }
             }
 
-            // --- GESTIÓN DE IMAGEN POR DEFECTO ---
             ivStoryImage.tag = historia.idHistoria
-            ivStoryImage.visibility = View.VISIBLE // Aseguramos que siempre sea visible
-            
             val defaultImg = Constants.PORTADA_DEFECTO
 
             if (historia.imagenUrl.isEmpty()) {
-                // Si no hay imagen, forzamos la carga del icono por defecto y limpiamos Coil
                 ivStoryImage.load(defaultImg)
             } else {
-                // Si hay imagen, cargamos la de Firebase Storage
                 val currentId = historia.idHistoria
                 FirebaseStorage.getInstance().getReference(historia.imagenUrl).downloadUrl
                     .addOnSuccessListener { uri ->

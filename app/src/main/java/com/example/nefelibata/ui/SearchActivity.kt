@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
@@ -22,8 +23,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 /**
- * Pantalla de búsqueda que permite filtrar historias por título, autor, estado y género,
- * así como buscar otros autores.
+ * Pantalla de búsqueda que permite filtrar historias por título, autor, estado y género.
+ * Recupera el estilo visual de la página principal (cartas grandes) y permite
+ * ocultar/mostrar los filtros secundarios para ganar espacio.
  */
 class SearchActivity : AppCompatActivity() {
 
@@ -34,7 +36,6 @@ class SearchActivity : AppCompatActivity() {
     private lateinit var adapterHistorias: HistoriaAdapter
     private lateinit var adapterAutores: AutorAdapter
     
-    // Listas completas descargadas de Firestore para realizar el filtrado en local
     private var listaHistoriasBase = mutableListOf<Historia>()
     private var listaAutoresBase = mutableListOf<Usuario>()
 
@@ -48,24 +49,31 @@ class SearchActivity : AppCompatActivity() {
 
         binding.ivBackSearch.setOnClickListener { finish() }
 
+        // Lógica para ocultar/mostrar opciones avanzadas (estilo Géneros)
+        binding.llFiltrosToggleHeader.setOnClickListener {
+            binding.llAdvancedFiltersContainer.isVisible = !binding.llAdvancedFiltersContainer.isVisible
+            binding.ivToggleFiltrosArrow.setImageResource(
+                if (binding.llAdvancedFiltersContainer.isVisible) android.R.drawable.arrow_up_float 
+                else android.R.drawable.arrow_down_float
+            )
+        }
+
         setupAdapters()
         setupTabs()
         setupFiltrosHistorias()
         cargarDatosBase()
 
-        // Búsqueda en tiempo real mientras el usuario escribe
         binding.etSearchText.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) { ejecutarBusquedaSegunTab() }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
-        
-        binding.btnEjecutarBusqueda.setOnClickListener { ejecutarBusquedaSegunTab() }
     }
 
     private fun setupAdapters() {
         binding.rvSearchResults.layoutManager = LinearLayoutManager(this)
-        adapterHistorias = HistoriaAdapter(emptyList(), emptyList()) { /* Gestión de favoritos no requerida aquí inicialmente */ }
+        // Usamos el diseño de cartas grandes igual que en el Inicio
+        adapterHistorias = HistoriaAdapter(emptyList(), emptyList()) { /* Favoritos no requeridos */ }
         adapterAutores = AutorAdapter(emptyList()) { autor ->
             val intent = Intent(this, PerfilAutorActivity::class.java).apply {
                 putExtra("idAutor", autor.idUsuario)
@@ -78,7 +86,6 @@ class SearchActivity : AppCompatActivity() {
     private fun setupTabs() {
         binding.tabLayoutSearch.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                // Cambia la visibilidad de los filtros y el adaptador según la pestaña seleccionada
                 if (tab?.position == 0) {
                     binding.llFiltrosHistorias.visibility = View.VISIBLE
                     binding.rvSearchResults.adapter = adapterHistorias
@@ -93,21 +100,23 @@ class SearchActivity : AppCompatActivity() {
         })
     }
 
-    /**
-     * Configura el desplegable de estados y los chips de géneros con textos traducidos.
-     */
     private fun setupFiltrosHistorias() {
         val estadosTraducidos = mutableListOf(getString(R.string.status_todos))
         estadosTraducidos.addAll(Constants.getEstadosTraducidos(this))
         
         binding.actvSearchStatus.setAdapter(ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, estadosTraducidos))
         binding.actvSearchStatus.setText(getString(R.string.status_todos), false)
+        
+        binding.actvSearchStatus.onItemClickListener = AdapterView.OnItemClickListener { _, _, _, _ ->
+            ejecutarBusquedaSegunTab()
+        }
 
         val generosTraducidos = Constants.getGenerosTraducidos(this)
         for (g in generosTraducidos) {
             val chip = Chip(this)
             chip.text = g
             chip.isCheckable = true
+            chip.setOnCheckedChangeListener { _, _ -> ejecutarBusquedaSegunTab() }
             binding.cgSearchGenres.addView(chip)
         }
 
@@ -120,15 +129,14 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Descarga todos los datos necesarios de Firestore para permitir una búsqueda local fluida.
-     */
     private fun cargarDatosBase() {
         db.collection("historias").get().addOnSuccessListener { docs ->
             listaHistoriasBase = docs.mapNotNull { it.toObject(Historia::class.java).apply { idHistoria = it.id } }.toMutableList()
+            if (binding.tabLayoutSearch.selectedTabPosition == 0) buscarHistorias()
         }
         db.collection("usuarios").get().addOnSuccessListener { docs ->
             listaAutoresBase = docs.mapNotNull { it.toObject(Usuario::class.java) }.toMutableList()
+            if (binding.tabLayoutSearch.selectedTabPosition == 1) buscarAutores()
         }
     }
 
@@ -136,9 +144,6 @@ class SearchActivity : AppCompatActivity() {
         if (binding.tabLayoutSearch.selectedTabPosition == 0) buscarHistorias() else buscarAutores()
     }
 
-    /**
-     * Filtra la lista local de historias según los criterios seleccionados.
-     */
     private fun buscarHistorias() {
         val query = binding.etSearchText.text.toString().trim().lowercase()
         val statusSelTraducido = binding.actvSearchStatus.text.toString()
@@ -147,69 +152,41 @@ class SearchActivity : AppCompatActivity() {
             .filter { it.isChecked }
             .map { it.text.toString() }
 
-        // Validación de longitud mínima de búsqueda
-        if (query.isNotEmpty() && query.length < Constants.MIN_SEARCH_LENGTH) {
-            limpiarResultados(getString(R.string.search_msg_min_chars, Constants.MIN_SEARCH_LENGTH))
-            return
-        }
-
-        // Estado inicial de la búsqueda
-        if (query.isEmpty() && statusSelTraducido == getString(R.string.status_todos) && genres.isEmpty()) {
-            limpiarResultados(getString(R.string.search_msg_initial))
-            return
-        }
-
         val filtrada = listaHistoriasBase.filter { h ->
             val matchQuery = query.isEmpty() || h.titulo.lowercase().contains(query) || h.autor.nombre.lowercase().contains(query)
-            
             val estadosTraducidos = Constants.getEstadosTraducidos(this)
-            val indiceEstado = estadosTraducidos.indexOf(statusSelTraducido)
-            val estadoDB = if (indiceEstado != -1) Constants.ESTADOS_DB[indiceEstado] else null
-            val matchStatus = statusSelTraducido == getString(R.string.status_todos) || h.obtenerEstadoValidado() == estadoDB
-            
+            val indiceEstado = estadosTraducidos.indexOf(statusSelTraducido) - 1
+            val matchStatus = statusSelTraducido == getString(R.string.status_todos) || 
+                            (indiceEstado >= 0 && h.obtenerEstadoValidado() == Constants.ESTADOS_DB[indiceEstado])
             val generosTraducidos = Constants.getGenerosTraducidos(this)
-            val generosDBSeleccionados = genres.map { gTrad -> Constants.GENEROS_DB[generosTraducidos.indexOf(gTrad)] }
+            val generosDBSeleccionados = genres.map { gTrad -> 
+                val idx = generosTraducidos.indexOf(gTrad)
+                if (idx != -1) Constants.GENEROS_DB[idx] else ""
+            }.filter { it.isNotEmpty() }
             val hGenerosDB = h.genero["es"] ?: emptyList()
             val matchGenres = genres.isEmpty() || hGenerosDB.containsAll(generosDBSeleccionados)
             
             matchQuery && matchStatus && matchGenres
         }
-        mostrarResultados(filtrada.isEmpty()) { adapterHistorias.actualizarDatos(filtrada, emptyList()) }
+        
+        mostrarResultados(filtrada.isEmpty()) { 
+            adapterHistorias.actualizarDatos(filtrada, emptyList()) 
+        }
     }
 
-    /**
-     * Filtra la lista local de autores.
-     */
     private fun buscarAutores() {
         val query = binding.etSearchText.text.toString().trim().lowercase()
         val currentUserId = auth.currentUser?.uid
-
-        if (query.isNotEmpty() && query.length < Constants.MIN_SEARCH_LENGTH) {
-            limpiarResultados(getString(R.string.search_msg_min_chars_authors, Constants.MIN_SEARCH_LENGTH))
-            return
-        }
-
-        if (query.isEmpty()) {
-            limpiarResultados(getString(R.string.search_msg_initial_author))
-            return
-        }
-
         val filtrada = listaAutoresBase.filter { 
-            it.nombre.lowercase().contains(query) && it.idUsuario != currentUserId 
+            (query.isEmpty() || it.nombre.lowercase().contains(query)) && it.idUsuario != currentUserId 
         }
-        
         mostrarResultados(filtrada.isEmpty()) { adapterAutores.actualizarDatos(filtrada) }
-    }
-
-    private fun limpiarResultados(msg: String) {
-        binding.rvSearchResults.isVisible = false
-        binding.tvSearchMessage.isVisible = true
-        binding.tvSearchMessage.text = msg
     }
 
     private fun mostrarResultados(vacia: Boolean, updateAction: () -> Unit) {
         if (vacia) {
-            limpiarResultados(getString(R.string.search_msg_no_results))
+            binding.rvSearchResults.isVisible = false
+            binding.tvSearchMessage.isVisible = true
         } else {
             binding.tvSearchMessage.isVisible = false
             binding.rvSearchResults.isVisible = true

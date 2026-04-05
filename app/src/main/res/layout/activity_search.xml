@@ -8,7 +8,7 @@
     android:background="?attr/colorSurface"
     tools:context=".ui.SearchActivity">
 
-    <!-- Header -->
+    <!-- Header Principal -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/header_search"
         android:layout_width="match_parent"
@@ -45,14 +45,14 @@
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Buscador de Texto -->
+    <!-- Buscador de Texto (Siempre visible para facilitar la búsqueda rápida) -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/til_search_text"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:hint="@string/search_hint"
         app:endIconMode="custom"
         app:endIconDrawable="@android:drawable/ic_menu_search"
@@ -62,88 +62,127 @@
             android:id="@+id/et_search_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
+            android:inputType="textCapSentences"
             android:textColor="?attr/colorOnSurface" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- PESTAÑAS (Tabs) -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_layout_search"
+    <!-- Header para Opciones Avanzadas (Estilo como el de Géneros) -->
+    <LinearLayout
+        android:id="@+id/ll_filtros_toggle_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        app:tabIndicatorColor="?attr/colorPrimary"
-        app:tabSelectedTextColor="?attr/colorPrimary"
-        app:tabTextColor="?attr/colorOnSurfaceVariant"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"
         app:layout_constraintTop_toBottomOf="@id/til_search_text">
-        <com.google.android.material.tabs.TabItem android:text="@string/tab_stories" />
-        <com.google.android.material.tabs.TabItem android:text="@string/tab_authors" />
-    </com.google.android.material.tabs.TabLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/search_options_toggle"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/iv_toggle_filtros_arrow"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:src="@android:drawable/arrow_down_float"
+            app:tint="?attr/colorOnSurface" />
+    </LinearLayout>
 
-    <!-- Contenedor Filtros Historias -->
+    <!-- Contenedor Colapsable de Opciones -->
     <LinearLayout
-        android:id="@+id/ll_filtros_historias"
+        android:id="@+id/ll_advanced_filters_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintTop_toBottomOf="@id/tab_layout_search">
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:layout_constraintTop_toBottomOf="@id/ll_filtros_toggle_header">
 
-        <!-- Filtro Estado -->
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout_search"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="12dp"
-            android:hint="@string/status_label">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/actv_search_status"
+            app:tabIndicatorColor="?attr/colorPrimary"
+            app:tabSelectedTextColor="?attr/colorPrimary"
+            app:tabTextColor="?attr/colorOnSurfaceVariant">
+            <com.google.android.material.tabs.TabItem android:text="@string/tab_stories" />
+            <com.google.android.material.tabs.TabItem android:text="@string/tab_authors" />
+        </com.google.android.material.tabs.TabLayout>
+
+        <LinearLayout
+            android:id="@+id/ll_filtros_historias"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="none"
-                tools:ignore="SpeakableTextPresentCheck" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:hint="@string/status_label">
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/actv_search_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Header Géneros -->
-        <LinearLayout
-            android:id="@+id/ll_generos_header_search"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
-            android:minHeight="48dp"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:clickable="true"
-            android:focusable="true">
-            <TextView
+            <LinearLayout
+                android:id="@+id/ll_generos_header_search"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/genres_label"
-                android:textColor="?attr/colorOnSurface"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-            <ImageView
-                android:id="@+id/iv_toggle_generos_search"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="8dp"
-                android:src="@android:drawable/arrow_down_float"
-                android:contentDescription="@string/genres_label"
-                app:tint="?attr/colorOnSurface" />
-        </LinearLayout>
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="4dp"
+                android:minHeight="40dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/genres_label"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+                <ImageView
+                    android:id="@+id/iv_toggle_generos_search"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="6dp"
+                    android:src="@android:drawable/arrow_down_float"
+                    app:tint="?attr/colorOnSurface" />
+            </LinearLayout>
 
-        <!-- Filtro Géneros -->
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/cg_search_genres"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="24dp"
-            android:layout_marginTop="4dp"
-            android:visibility="gone"
-            app:chipSpacingHorizontal="8dp"
-            app:chipSpacingVertical="8dp" />
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cg_search_genres"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp" />
+        </LinearLayout>
     </LinearLayout>
+
+    <!-- Resultados con diseño de página principal -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_search_results"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ll_advanced_filters_container"
+        tools:listitem="@layout/item_historia" />
 
     <TextView
         android:id="@+id/tv_search_message"
@@ -151,31 +190,10 @@
         android:layout_height="wrap_content"
         android:layout_margin="32dp"
         android:gravity="center"
-        android:text="@string/search_msg_initial"
-        android:textColor="?attr/colorOnSurfaceVariant"
+        android:text="@string/search_msg_no_results"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ll_filtros_historias"
-        app:layout_constraintBottom_toTopOf="@id/btn_ejecutar_busqueda"
-        app:layout_constraintVertical_bias="0.0" />
-
-    <!-- Resultados -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_search_results"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/btn_ejecutar_busqueda"
-        app:layout_constraintTop_toBottomOf="@id/ll_filtros_historias"
-        tools:listitem="@layout/item_historia" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_ejecutar_busqueda"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="16dp"
-        android:text="@string/search_button"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/ll_advanced_filters_container" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
