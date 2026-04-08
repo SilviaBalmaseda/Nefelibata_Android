@@ -2,6 +2,7 @@ package com.example.nefelibata.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -108,6 +109,15 @@ class LeerHistoriaActivity : AppCompatActivity() {
         
         binding.actvLeerSelectorCapitulo.apply {
             setAdapter(ArrayAdapter(this@LeerHistoriaActivity, android.R.layout.simple_dropdown_item_1line, titulos))
+            
+            // Ajuste dinámico de altura: 
+            // Si hay más de 5 capítulos, limitamos a 300dp. Si no, se ajusta al contenido (WRAP_CONTENT).
+            dropDownHeight = if (listaCapitulos.size > 5) {
+                (300 * resources.displayMetrics.density).toInt()
+            } else {
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+
             setOnItemClickListener { _, _, position, _ ->
                 indiceActual = position
                 actualizarVistaCapitulo()
@@ -136,6 +146,11 @@ class LeerHistoriaActivity : AppCompatActivity() {
         
         binding.btnLeerAnterior.isEnabled = indiceActual > 0
         binding.btnLeerSiguiente.isEnabled = indiceActual < listaCapitulos.size - 1
+
+        // Al cambiar de capítulo, volvemos al inicio del texto
+        binding.svLeerContenido.post {
+            binding.svLeerContenido.scrollTo(0, 0)
+        }
     }
 
     private fun showError() {

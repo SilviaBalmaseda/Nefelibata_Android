@@ -111,13 +111,18 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="@string/select_chapter_hint">
+                android:hint="@string/select_chapter_hint"
+                app:boxStrokeWidth="2dp"
+                app:boxStrokeColor="@color/primary_blue"
+                app:boxStrokeWidthFocused="3dp">
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/actv_leer_selector_capitulo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="none"
                     android:textSize="14sp"
+                    android:dropDownHeight="wrap_content"
+                    android:popupBackground="@drawable/bg_dropdown"
                     tools:ignore="SpeakableTextPresentCheck" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -129,6 +134,7 @@
 
             <!-- Contenido -->
             <ScrollView
+                android:id="@+id/sv_leer_contenido"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
