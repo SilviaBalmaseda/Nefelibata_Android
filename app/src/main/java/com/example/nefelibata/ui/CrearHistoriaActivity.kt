@@ -176,14 +176,34 @@ class CrearHistoriaActivity : AppCompatActivity() {
 
     private fun guardarCambios() {
         val titulo = binding.etCrearTitulo.text.toString().trim()
+        val sinopsis = binding.etCrearSinopsis.text.toString().trim()
         
+        // 1. Título de la historia: OBLIGATORIO
         if (titulo.length < Constants.MIN_STORY_TITLE_LENGTH) {
             Toast.makeText(this, getString(R.string.min_story_title_chars, Constants.MIN_STORY_TITLE_LENGTH), Toast.LENGTH_SHORT).show()
             return
         }
 
+        // 2. Contenido del capítulo: OBLIGATORIO (Solo al crear nueva historia)
+        if (idHistoriaEdicion == null) {
+            val contenidoCap = binding.etCrearContenidoCap.text.toString().trim()
+            if (contenidoCap.isEmpty()) {
+                Toast.makeText(this, getString(R.string.content_required), Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
         binding.btnGuardarHistoria.isEnabled = false
         binding.btnGuardarHistoria.text = getString(R.string.saving_msg)
+
+        // Obtener géneros seleccionados (aunque no sean obligatorios)
+        val generosSel = mutableListOf<String>()
+        for (i in 0 until binding.cgCrearGeneros.childCount) {
+            val chip = binding.cgCrearGeneros.getChildAt(i) as Chip
+            if (chip.isChecked) {
+                generosSel.add(Constants.GENEROS_DB[i])
+            }
+        }
 
         lifecycleScope.launch {
             try {
@@ -195,14 +215,6 @@ class CrearHistoriaActivity : AppCompatActivity() {
                     downloadUrl = ref.path
                 }
 
-                val generosSel = mutableListOf<String>()
-                for (i in 0 until binding.cgCrearGeneros.childCount) {
-                    val chip = binding.cgCrearGeneros.getChildAt(i) as Chip
-                    if (chip.isChecked) {
-                        generosSel.add(Constants.GENEROS_DB[i])
-                    }
-                }
-
                 val estadoSelTraducido = binding.actvCrearEstado.text.toString()
                 val estadosTraducidos = Constants.getEstadosTraducidos(this@CrearHistoriaActivity)
                 val indiceEstado = estadosTraducidos.indexOf(estadoSelTraducido)
@@ -210,9 +222,9 @@ class CrearHistoriaActivity : AppCompatActivity() {
 
                 val data = mutableMapOf<String, Any>(
                     "titulo" to titulo,
-                    "sinopsis" to binding.etCrearSinopsis.text.toString().trim(),
+                    "sinopsis" to sinopsis,
                     "estado" to mapOf("es" to estadoDB),
-                    "genero" to mapOf("es" to if(generosSel.isEmpty()) listOf("Ninguno") else generosSel),
+                    "genero" to mapOf("es" to if (generosSel.isEmpty()) listOf("Ninguno") else generosSel),
                     "fechaModificacionH" to Timestamp.now()
                 )
                 if (downloadUrl.isNotEmpty()) data["imagenUrl"] = downloadUrl
@@ -248,7 +260,7 @@ class CrearHistoriaActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Toast.makeText(this@CrearHistoriaActivity, "${getString(R.string.error_loading)}: ${e.message}", Toast.LENGTH_LONG).show()
                 binding.btnGuardarHistoria.isEnabled = true
-                binding.btnGuardarHistoria.text = getString(R.string.update_story_button)
+                binding.btnGuardarHistoria.text = if (idHistoriaEdicion == null) getString(R.string.publish_story_button) else getString(R.string.update_story_button)
             }
         }
     }

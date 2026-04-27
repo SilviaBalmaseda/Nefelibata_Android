@@ -11,7 +11,7 @@
     <string name="name_hint">Nombre</string>
     <string name="login_button">INICIAR SESIÓN</string>
     <string name="register_button">REGISTRARSE</string>
-    <string name="google_login">Entrar con Google</string>
+    <string name="google_login">Continuar con Google</string>
     <string name="fill_all_fields">Por favor, rellena todos los campos</string>
     <string name="password_too_short">La contraseña debe tener al menos 6 caracteres</string>
     <string name="login_error">Contraseña o usuario incorrectos</string>
@@ -95,7 +95,7 @@
     <string name="success_msg">¡Éxito!</string>
     <string name="story_published_msg">¡Historia publicada!</string>
     <string name="title_required">El título es obligatorio</string>
-    <string name="content_required">Título e Historia son obligatorios</string>
+    <string name="content_required">El contenido del capítulo es obligatorio</string>
     <string name="min_story_title_chars">El título debe tener al menos %1$d caracteres</string>
 
     <!-- Chapters Management -->

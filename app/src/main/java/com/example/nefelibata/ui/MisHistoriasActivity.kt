@@ -17,6 +17,7 @@ import com.example.nefelibata.models.Historia
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.WriteBatch
 
 class MisHistoriasActivity : AppCompatActivity() {
 
@@ -104,29 +105,63 @@ class MisHistoriasActivity : AppCompatActivity() {
 
         dialogBinding.btnCancelDelete.setOnClickListener { dialog.dismiss() }
         dialogBinding.btnConfirmDelete.setOnClickListener {
-            eliminarHistoriaYFavoritos(historia.idHistoria)
+            eliminarHistoriaCompleta(historia.idHistoria)
             dialog.dismiss()
         }
         
         dialog.show()
     }
 
-    private fun eliminarHistoriaYFavoritos(idHistoria: String) {
-        db.collection("historias").document(idHistoria)
-            .delete()
-            .addOnSuccessListener {
-                db.collection("usuarios")
-                    .whereArrayContains("idFavoritas", idHistoria)
-                    .get()
-                    .addOnSuccessListener { querySnapshot ->
-                        val batch = db.batch()
-                        for (doc in querySnapshot.documents) {
-                            batch.update(doc.reference, "idFavoritas", FieldValue.arrayRemove(idHistoria))
-                        }
-                        batch.commit().addOnCompleteListener {
-                            cargarMisHistorias()
-                        }
-                    }
+    /**
+     * Elimina una historia, sus capítulos asociados y las referencias en favoritos de otros usuarios.
+     */
+    private fun eliminarHistoriaCompleta(idHistoria: String) {
+        // 1. Obtener todos los capítulos de la historia
+        db.collection("historias").document(idHistoria).collection("capitulos").get()
+            .addOnSuccessListener { capitulosSnapshot ->
+                val batch = db.batch()
+                
+                // 2. Añadir eliminación de cada capítulo al batch
+                for (capDoc in capitulosSnapshot.documents) {
+                    batch.delete(capDoc.reference)
+                }
+                
+                // 3. Añadir eliminación del documento principal de la historia al batch
+                val historiaRef = db.collection("historias").document(idHistoria)
+                batch.delete(historiaRef)
+                
+                // 4. Ejecutar el borrado masivo
+                batch.commit().addOnSuccessListener {
+                    // 5. Por último, limpiar la historia de las listas de favoritos de los usuarios
+                    limpiarFavoritosDeUsuarios(idHistoria)
+                }.addOnFailureListener {
+                    // Si falla el batch, intentamos al menos borrar la historia y favoritos
+                    db.collection("historias").document(idHistoria).delete()
+                    limpiarFavoritosDeUsuarios(idHistoria)
+                }
+            }
+            .addOnFailureListener {
+                // Si falla al obtener capítulos, intentamos borrar solo la historia y favoritos
+                db.collection("historias").document(idHistoria).delete()
+                limpiarFavoritosDeUsuarios(idHistoria)
+            }
+    }
+
+    private fun limpiarFavoritosDeUsuarios(idHistoria: String) {
+        db.collection("usuarios")
+            .whereArrayContains("idFavoritas", idHistoria)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val batchFavoritos = db.batch()
+                for (doc in querySnapshot.documents) {
+                    batchFavoritos.update(doc.reference, "idFavoritas", FieldValue.arrayRemove(idHistoria))
+                }
+                batchFavoritos.commit().addOnCompleteListener {
+                    cargarMisHistorias()
+                }
+            }
+            .addOnFailureListener {
+                cargarMisHistorias()
             }
     }
 }

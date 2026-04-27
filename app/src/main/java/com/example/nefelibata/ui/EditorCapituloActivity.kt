@@ -47,6 +47,7 @@ class EditorCapituloActivity : AppCompatActivity() {
         val titulo = binding.etEditorCapTitulo.text.toString().trim()
         val contenido = binding.etEditorCapContenido.text.toString().trim()
 
+        // Solo el contenido es obligatorio según los nuevos requisitos
         if (contenido.isEmpty()) {
             Toast.makeText(this, getString(R.string.content_required), Toast.LENGTH_SHORT).show()
             return

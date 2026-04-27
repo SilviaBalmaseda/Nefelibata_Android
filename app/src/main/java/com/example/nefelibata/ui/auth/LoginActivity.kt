@@ -80,18 +80,27 @@ class LoginActivity : AppCompatActivity() {
             val password = binding.etPassword.text.toString().trim()
             val nombre = binding.etNombre.text.toString().trim()
 
-            // Validaciones básicas de campos vacíos
+            // 1. Validación de campos vacíos (Critico para ambos modos)
             if (inputIdentificador.isEmpty() || password.isEmpty() || (!isLoginMode && nombre.isEmpty())) {
                 Toast.makeText(this, getString(R.string.fill_all_fields), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Validaciones específicas para el modo registro
+            // 2. Validaciones específicas para el modo registro
             if (!isLoginMode) {
+                // El email debe tener un formato válido en registro
+                if (!Patterns.EMAIL_ADDRESS.matcher(inputIdentificador).matches()) {
+                    Toast.makeText(this, getString(R.string.fill_all_fields), Toast.LENGTH_SHORT).show() // O un error de email inválido si existiera
+                    return@setOnClickListener
+                }
+                
+                // Longitud mínima de nombre
                 if (nombre.replace(" ", "").length < Constants.MIN_NAME_LENGTH) {
                     Toast.makeText(this, getString(R.string.min_name_chars, Constants.MIN_NAME_LENGTH), Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
+                
+                // Longitud mínima de contraseña
                 if (password.length < 6) {
                     Toast.makeText(this, getString(R.string.password_too_short), Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
